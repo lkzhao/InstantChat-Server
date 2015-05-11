@@ -2,16 +2,22 @@
 
 express = require 'express'
 router = express.Router()
-client = require('../redisClient').client
+User = require '../models/User'
 
 router.post '/', (req, res) ->
-  
+
+  user = new User req.param("username")
+
   # TODO: encode password
-  profile =
-    username: req.param("username")
-    password: req.param("password")
-    email: req.param("email")
+  user.password = req.param("password")
+  user.email = req.param("email")
 
   # TODO: Validate
+  User.exist user.username, (exist)->
+    if exist
+      res.json {success: false, error: "username exist"}
+    else
+      user.save()
+      res.json {success: true}
 
 module.exports = router
