@@ -51,6 +51,9 @@ module.exports = (io, rclient) ->
           lock User.key(msg.toUser), (done) ->
             User.get msg.toUser, (toUser)->
               toUser.removeMessage msgId, done
+              if toUser.username of users
+                for soc in users[toUser.username]
+                  soc.emit "ChatViewMessage", msgId, viewTime
 
     socket.on "RequestUserData", (fn) ->
       fn username
