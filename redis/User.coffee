@@ -25,40 +25,50 @@ UserSchema
 validatePresenceOf = (value) ->
   return value && value.length
 
+UserSchema.path('name').validate((name) ->
+  if @skipValidation() return true
+  return name.length
+, 'Name cannot be blank')
+
 UserSchema.path('email').validate((email) ->
+  if @skipValidation() return true
   return email.length
 , 'Email cannot be blank')
 
 UserSchema.path('email').validate((email, fn) ->
   User = mongoose.model('User')
+  if @skipValidation() fn(true)
+
   # Check only when it is a new user or when email field is modified
   if @isNew || @isModified('email')
     User.find({ email: email }).exec((err, users) ->
-      fn !err && users.length == 0
-    )
+      fn !err && users.length === 0
+    })
   else 
     fn(true)
 , 'Email already exists')
 
 UserSchema.path('username').validate((username) ->
+  if @skipValidation() return true
   return username.length
 , 'Username cannot be blank')
 
 UserSchema.path('hashed_password').validate((hashed_password) ->
+  if @skipValidation() return true
   return hashed_password.length
 , 'Password cannot be blank')
 
 
 
 UserSchema.pre('save', (next) ->
-  if !@isNew
-    return next()
+  if (!@isNew) return next()
 
-  if !validatePresenceOf(@password)
+  if (!validatePresenceOf(@password) && !@skipValidation()) {
     next(new Error('Invalid password'))
-  else
+  } else {
     next()
-)
+  }
+})
 
 
 UserSchema.methods = 
@@ -71,7 +81,7 @@ UserSchema.methods =
   ###
 
   authenticate: (plainText) ->
-    return @encryptPassword(plainText) == @hashed_password
+    return @encryptPassword(plainText) === @hashed_password
 
   ###
    * Make salt
@@ -92,14 +102,13 @@ UserSchema.methods =
   ###
 
   encryptPassword: (password) ->
-    if !password 
-      return ''
+    if !password return ''
     try 
       return crypto
         .createHmac('sha1', @salt)
         .update(password)
         .digest('hex')
-    catch err
+    catch (err)
       return ''
 
 ###
@@ -119,11 +128,6 @@ UserSchema.statics =
     options.select = options.select || 'name username'
     @findOne(options.criteria)
       .select(options.select)
-      .exec(cb)
-
-  loadWithUsername: (username, cb) ->
-    @findOne({username: username})
-      .select("name username")
       .exec(cb)
 
 mongoose.model 'User', UserSchema

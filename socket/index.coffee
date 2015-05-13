@@ -2,33 +2,40 @@
 
 socketioJwt = require "socketio-jwt"
 jwtSecret = process.env.JWT_SECRET
-User = require "../models/User"
-Message = require "../models/Message"
 
-lock = require("../models/redisClient").lock
+mongoose = require 'mongoose'
+User = mongoose.model 'User'
+Message = mongoose.model 'Message'
+lock = require("../redis/redisClient").lock
+
+manager = require "./manager"
 
 module.exports = (io, rclient) ->
   io.use socketioJwt.authorize(
     secret: jwtSecret,
     handshake: true
   )
-
-  users = {}
-  io.on "connection", (socket) ->
+  io.use (socket, next) ->
     username = socket.decoded_token.username
-    console.log "#{username} connected"
-
-    if username of users
-      users[username].push socket
+    if username
+      User.loadWithUsername username, (err, user) ->
+        if (err)
+          next new Error('Database error')
+        else
+          socket.user = user
+          socket.username = username
+          next()
     else
-      users[username] = [socket]
+      next new Error('Authentication error')
 
+  io.on "connection", (socket) ->
+    user = socket.user
+    username = socket.username
+    console.log "#{username} connected"
+    manager.addSocket socket
 
     socket.on "disconnect", ->
-      if users[username].length == 1
-        delete users[username]
-      else
-        users[username].splice users[username].indexOf(socket), 1
+      manager.removeSocket socket
       console.log "#{username} disconnected"
 
     socket.on "error", (err) ->
@@ -36,63 +43,48 @@ module.exports = (io, rclient) ->
 
     # view message
     socket.on "ChatViewMessage", (msgId, viewTime) ->
-      Message.get msgId, (msg)->
-        if msg
-          console.log "#{msg.toUser} read #{viewTime}"
-          msg.remove()
+      console.log "viewed #{msgId}"
+      Message.load msgId, (err, msg)->
+        if err
+          return
 
-          lock User.key(msg.fromUser), (done) ->
-            User.get msg.fromUser, (fromUser)->
-              fromUser.removeMessage msgId, done
-              if fromUser.username of users
-                for soc in users[fromUser.username]
-                  soc.emit "ChatViewMessage", msgId, viewTime
+        for soc in manager.allSocketsForUser(msg.fromUser.username)
+          soc.emit "ChatViewMessage", msgId, viewTime
 
-          lock User.key(msg.toUser), (done) ->
-            User.get msg.toUser, (toUser)->
-              toUser.removeMessage msgId, done
-              if toUser.username of users
-                for soc in users[toUser.username]
-                  soc.emit "ChatViewMessage", msgId, viewTime
+        for soc in manager.allSocketsForUser(msg.toUser.username)
+          soc.emit "ChatViewMessage", msgId, viewTime
 
-    socket.on "RequestUserData", (fn) ->
-      fn username
+        msg.remove()
 
     # send message
     socket.on "ChatSendNewUserMessage", (sendTo, date, content, fn) ->
-      message = new Message username, sendTo, date, content
-      fromUser = new User username
-      toUser = new User sendTo
-      fromUser.load (fromUserLoadSuccess) ->
-        toUser.load (toUserLoadSuccess) ->
-          if fromUserLoadSuccess and toUserLoadSuccess
-            message.save (msgSaveSuccess) ->
-              if msgSaveSuccess
-                fromUser.outgoingMessages.push message.id
-                toUser.incomingMessages.push message.id
-                fromUser.save (fromUserSaveSuccess) ->
-                  toUser.save (toUserSaveSuccess) ->
-                    if fromUserSaveSuccess and toUserSaveSuccess
-                      if sendTo of users
-                        for soc in users[sendTo]
-                          soc.emit "ChatReceiveNewUserMessage", message.toData()
-                      if username of users
-                        for soc in users[username]
-                          soc.emit "ChatReceiveNewUserMessage", message.toData()
-                      fn true, message.id, "Success"
-                      console.log "#{username}->#{sendTo}: #{content}"
-                    else
-                      fn false, 2, "Failed to save users"
-              else
-                fn false, 2, "Failed to save message"
-          else
-            fn false, 1, "Failed to load user"
+      message = new Message 
+        date:date
+        content:content
+      User.loadWithUsername sendTo, (err, toUser) ->
+        if (err)
+          fn false, 1, "Failed to load user"
+          return
+        message.fromUser = socket.user
+        message.toUser = toUser
+
+        message.save (err, message) ->
+          if err
+            fn false, 2, "Failed to save message"
+            return
+          for soc in manager.allSocketsForUser(sendTo)
+            soc.emit "ChatReceiveNewUserMessage", message.toObject()
+          for soc in manager.allSocketsForUser(username)
+            soc.emit "ChatReceiveNewUserMessage", message.toObject()
+          fn true, message.id, "Success"
 
 
-    User.get username, (user) ->
-      if user
-        for msgId in user.incomingMessages.concat(user.outgoingMessages)
-          Message.get msgId, (msg)->
-            socket.emit "ChatReceiveNewUserMessage", msg.toData()
+    Message.find().or([{ toUser: user }, { fromUser: user }])
+      .populate('fromUser toUser','username')
+      .exec (err, messages)->
+        if err
+          return
+        for msg in messages
+          socket.emit "ChatReceiveNewUserMessage", msg.toObject()
 
 
