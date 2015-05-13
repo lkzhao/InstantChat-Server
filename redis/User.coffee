@@ -10,6 +10,7 @@ UserSchema = new Schema
   username: { type: String, default: '' }
   hashed_password: { type: String, default: '' }
   salt: { type: String, default: '' }
+  contacts: [{type : Schema.ObjectId, ref : 'User'}],
 
 
 UserSchema

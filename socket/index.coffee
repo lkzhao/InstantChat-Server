@@ -15,22 +15,17 @@ module.exports = (io, rclient) ->
     secret: jwtSecret,
     handshake: true
   )
+
   io.use (socket, next) ->
     username = socket.decoded_token.username
     if username
-      User.loadWithUsername username, (err, user) ->
-        if (err)
-          next new Error('Database error')
-        else
-          socket.user = user
-          socket.username = username
-          next()
+      socket.username = username
+      next()
     else
       next new Error('Authentication error')
 
   io.on "connection", (socket) ->
-    user = socket.user
-    username = socket.username
+    username = socket.decoded_token.username
     console.log "#{username} connected"
     manager.addSocket socket
 
@@ -42,49 +37,68 @@ module.exports = (io, rclient) ->
       console.log "Error: #{err}"
 
     # view message
-    socket.on "ChatViewMessage", (msgId, viewTime) ->
-      console.log "viewed #{msgId}"
-      Message.load msgId, (err, msg)->
+    socket.on "VIEW", (data) ->
+      Message.load data.messageId, (err, msg)->
         if err
           return
 
         for soc in manager.allSocketsForUser(msg.fromUser.username)
-          soc.emit "ChatViewMessage", msgId, viewTime
+          soc.emit "VIEW", data
 
         for soc in manager.allSocketsForUser(msg.toUser.username)
-          soc.emit "ChatViewMessage", msgId, viewTime
+          soc.emit "VIEW", data
 
         msg.remove()
 
     # send message
-    socket.on "ChatSendNewUserMessage", (sendTo, date, content, fn) ->
-      message = new Message 
-        date:date
-        content:content
-      User.loadWithUsername sendTo, (err, toUser) ->
-        if (err)
-          fn false, 1, "Failed to load user"
-          return
-        message.fromUser = socket.user
-        message.toUser = toUser
+    socket.on "SEND", (data, fn) ->
+      sendTo = data.sendTo
+      message = new Message
+        date: data.date
+        content: data.content
 
-        message.save (err, message) ->
-          if err
-            fn false, 2, "Failed to save message"
+      User.loadWithUsername username, (ferr, user) ->
+        User.loadWithUsername sendTo, (terr, toUser) ->
+          if ferr || terr
+            fn { error: "Failed to load user" }
             return
-          for soc in manager.allSocketsForUser(sendTo)
-            soc.emit "ChatReceiveNewUserMessage", message.toObject()
-          for soc in manager.allSocketsForUser(username)
-            soc.emit "ChatReceiveNewUserMessage", message.toObject()
-          fn true, message.id, "Success"
+          message.fromUser = user
+          message.toUser = toUser
+
+          console.log user.contacts
+          if user.contacts.indexOf(toUser.id) > -1
+            console.log "User has contact"
+          else
+            user.contacts.push toUser
+            user.save()
+
+          message.save (err, message) ->
+            if err
+              fn { error: "Failed to save message" }
+              return
+            fn { messageId: message.id }
+            for soc in manager.allSocketsForUser(sendTo)
+              soc.emit "RECEIVE", message.toObject()
+            for soc in manager.allSocketsForUser(username)
+              soc.emit "RECEIVE", message.toObject()
 
 
-    Message.find().or([{ toUser: user }, { fromUser: user }])
-      .populate('fromUser toUser','username')
-      .exec (err, messages)->
-        if err
-          return
-        for msg in messages
-          socket.emit "ChatReceiveNewUserMessage", msg.toObject()
+    User.findOne({ username:username })
+      .populate('contacts', 'username')
+      .exec (ferr, user) ->
+        Message.find().or([{ toUser: user }, { fromUser: user }])
+          .populate('fromUser toUser','username')
+          .exec (err, messages)->
+            if err
+              return
+            contacts = []
+            messages = []
+            for contact in user.contacts
+              contacts.push contact.username
+            for msg in messages
+              messages.push msg.toObject()
+            socket.emit "RELOAD",
+              contacts: contacts
+              messages: messages
 
 
