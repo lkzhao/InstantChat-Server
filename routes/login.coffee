@@ -20,7 +20,7 @@ router.post '/', (req, res) ->
     username: username
 
   User.load options, (err, user) ->
-    if (err)
+    if err || !user
       res.json {success:false, error: "Failed to load user"}
     else
       if user.authenticate req.param("password")
