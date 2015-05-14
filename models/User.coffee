@@ -1,6 +1,9 @@
 
 mongoose = require('mongoose')
 crypto = require('crypto')
+crate = require('mongoose-crate')
+S3 = require('mongoose-crate-s3')
+GraphicsMagic = require('mongoose-crate-gm')
 
 Schema = mongoose.Schema
 
@@ -126,5 +129,26 @@ UserSchema.statics =
     @findOne({username: username})
       .select("name username contacts")
       .exec(cb)
+
+
+UserSchema.plugin crate,
+  storage:
+    new S3
+      key: 'AKIAJPH7WDSTFTOXAK7Q'
+      secret: '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'
+      bucket: 'instantchat'
+  fields:
+    image:
+      processor: new GraphicsMagic
+        transforms:
+          small:
+            resize: '150x150'
+            format: '.jpg'
+          medium:
+            resize: '250x250'
+            format: '.jpg'
+          large:
+            resize: '512x512'
+            format: '.jpg'
 
 mongoose.model 'User', UserSchema

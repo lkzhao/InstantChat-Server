@@ -7,6 +7,7 @@ router = express.Router()
 
 jwtSecret = process.env.JWT_SECRET
 
+
 # POST /login
 router.post '/', (req, res) ->
   username = req.param("username")

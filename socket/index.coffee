@@ -59,7 +59,7 @@ module.exports = (io, rclient) ->
 
       User.loadWithUsername username, (ferr, user) ->
         User.loadWithUsername sendTo, (terr, toUser) ->
-          if ferr || terr
+          if ferr || terr || !toUser
             fn { error: "Failed to load user" }
             return
           message.fromUser = user
@@ -84,7 +84,7 @@ module.exports = (io, rclient) ->
 
 
     User.findOne({ username:username })
-      .populate('contacts', 'username')
+      .populate('contacts', 'username image.large')
       .exec (ferr, user) ->
         Message.find().or([{ toUser: user }, { fromUser: user }])
           .populate('fromUser toUser','username')
@@ -94,7 +94,10 @@ module.exports = (io, rclient) ->
             contacts = []
             messages = []
             for contact in user.contacts
-              contacts.push contact.username
+              console.log contact.image
+              contacts.push 
+                username:contact.username
+                image:contact.image.large.url
             for msg in messages
               messages.push msg.toObject()
             socket.emit "RELOAD",
