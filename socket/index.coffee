@@ -76,6 +76,7 @@ module.exports = (io, rclient) ->
             if err
               fn { error: "Failed to save message" }
               return
+            console.log "saved", message.toObject()
             fn { messageId: message.id }
             for soc in manager.allSocketsForUser(sendTo)
               soc.emit "RECEIVE", message.toObject()
@@ -91,17 +92,18 @@ module.exports = (io, rclient) ->
           .exec (err, messages)->
             if err
               return
-            contacts = []
-            messages = []
+            contactDatas = []
+            messageDatas = []
             for contact in user.contacts
               console.log contact.image
-              contacts.push 
+              contactDatas.push 
                 username:contact.username
                 image:contact.image.large.url
             for msg in messages
-              messages.push msg.toObject()
+              console.log msg.toObject()
+              messageDatas.push msg.toObject()
             socket.emit "RELOAD",
-              contacts: contacts
-              messages: messages
+              contacts: contactDatas
+              messages: messageDatas
 
 
