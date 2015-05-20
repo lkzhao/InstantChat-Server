@@ -14,6 +14,7 @@ UserSchema = new Schema
   hashed_password: { type: String, default: '' }
   salt: { type: String, default: '' }
   contacts: [{type : Schema.ObjectId, ref : 'User'}]
+  deviceIds: [String]
 
 
 UserSchema
@@ -127,7 +128,7 @@ UserSchema.statics =
 
   loadWithUsername: (username, cb) ->
     @findOne({username: username})
-      .select("name username contacts")
+      .select("name username contacts deviceIds")
       .exec(cb)
 
 

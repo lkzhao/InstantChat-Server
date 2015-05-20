@@ -9,6 +9,25 @@ Message = mongoose.model 'Message'
 lock = require("../redis/redisClient").lock
 
 manager = require "./manager"
+apn = require 'apn'
+options = 
+  passphrase: "S0ySauc3"
+apnConnection = new apn.Connection(options)
+
+Array.prototype.remove = (args...) ->
+  output = []
+  for arg in args
+    index = @indexOf arg
+    output.push @splice(index, 1) if index isnt -1
+  output = output[0] if args.length is 1
+  output
+
+saveDeviceID = (user, deviceId) ->
+  console.log "deviceId: #{deviceId}"
+  if deviceId and user
+    if user.deviceIds.indexOf(deviceId) == -1
+      user.deviceIds.push(deviceId)
+      user.save()
 
 module.exports = (io, rclient) ->
   io.use socketioJwt.authorize(
@@ -17,6 +36,10 @@ module.exports = (io, rclient) ->
   )
 
   io.use (socket, next) ->
+    req = socket.request || socket
+    if req._query && req._query.deviceToken
+      socket.deviceId = req._query.deviceToken
+
     username = socket.decoded_token.username
     if username
       socket.username = username
@@ -35,6 +58,12 @@ module.exports = (io, rclient) ->
 
     socket.on "error", (err) ->
       console.log "Error: #{err}"
+
+    # view message
+    socket.on "UPDATE_DEVICE_TOKEN", (data) ->
+      socket.deviceId = data[deviceToken]
+      User.loadWithUsername username, (ferr, user) ->
+        saveDeviceID(user, socket.deviceId)
 
     # view message
     socket.on "VIEW", (data) ->
@@ -78,15 +107,31 @@ module.exports = (io, rclient) ->
               return
             console.log "saved", message.toObject()
             fn { messageId: message.id }
+            toUserDevices = toUser.deviceIds.slice()
+
             for soc in manager.allSocketsForUser(sendTo)
+              toUserDevices.remove(soc.deviceId)
               soc.emit "RECEIVE", message.toObject()
+            Message.find({toUser: toUser, fromUser: user}).exec (err, messages) ->
+              for deviceId in toUserDevices
+                device = new apn.Device(deviceId)
+                note = new apn.Notification()
+                note.expiry = Math.floor(Date.now() / 1000) + 3600 # Expires 1 hour from now.
+                if messages
+                  note.badge = messages.length
+                note.sound = "ping.aiff"
+                note.alert = "#{username} send you a message."
+                note.payload = {'messageFrom': username}
+                apnConnection.pushNotification(note, device)
             for soc in manager.allSocketsForUser(username)
               soc.emit "RECEIVE", message.toObject()
 
 
     User.findOne({ username:username })
+      .select('deviceIds contacts')
       .populate('contacts', 'username image.large')
       .exec (ferr, user) ->
+        saveDeviceID(user, socket.deviceId)
         Message.find().or([{ toUser: user }, { fromUser: user }])
           .populate('fromUser toUser','username')
           .exec (err, messages)->
@@ -94,14 +139,14 @@ module.exports = (io, rclient) ->
               return
             contactDatas = []
             messageDatas = []
-            for contact in user.contacts
-              console.log contact.image
-              contactDatas.push 
-                username:contact.username
-                image:contact.image.large.url
-            for msg in messages
-              console.log msg.toObject()
-              messageDatas.push msg.toObject()
+            if user.contacts
+              for contact in user.contacts
+                contactDatas.push 
+                  username:contact.username
+                  image:contact.image.large.url
+            if messages
+              for msg in messages
+                messageDatas.push msg.toObject()
             socket.emit "RELOAD",
               contacts: contactDatas
               messages: messageDatas
