@@ -110,7 +110,8 @@ module.exports = (io, rclient) ->
             toUserDevices = toUser.deviceIds.slice()
 
             for soc in manager.allSocketsForUser(sendTo)
-              toUserDevices.remove(soc.deviceId)
+              # uncomment the following line to disable notification to connected clients
+              # toUserDevices.remove(soc.deviceId)
               soc.emit "RECEIVE", message.toObject()
             Message.find({toUser: toUser, fromUser: user}).exec (err, messages) ->
               for deviceId in toUserDevices
