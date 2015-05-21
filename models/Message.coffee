@@ -7,7 +7,10 @@ MessageSchema = new Schema
   fromUser: {type : Schema.ObjectId, ref : 'User'},
   toUser: {type : Schema.ObjectId, ref : 'User'},
   date: { type: String, default: '' }
+  type: { type: String, default: 'text' }
   content: { type: String, default: '' }
+  binaryContent: { type: Buffer }
+  metaData: { type: String, default: '{}' }
 
 
 MessageSchema.methods = {}
@@ -21,9 +24,11 @@ MessageSchema.statics =
 
 MessageSchema.options.toObject = {};
 MessageSchema.options.toObject.transform = (doc, ret, options) ->
+  console.log ret
   ret.fromUser = ret.fromUser.username
   ret.toUser = ret.toUser.username
   ret.id = ret._id
+  ret.metaData = JSON.parse ret.metaData
   delete ret._id
   delete ret.__v
   return ret

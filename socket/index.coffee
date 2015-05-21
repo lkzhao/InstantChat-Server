@@ -82,9 +82,18 @@ module.exports = (io, rclient) ->
     # send message
     socket.on "SEND", (data, fn) ->
       sendTo = data.sendTo
-      message = new Message
+
+      messageData = 
         date: data.date
         content: data.content
+        type: data.type
+
+      if data.binaryContent
+        messageData.binaryContent = data.binaryContent
+      if data.metaData
+        messageData.metaData = JSON.stringify data.metaData
+
+      message = new Message messageData
 
       User.loadWithUsername username, (ferr, user) ->
         User.loadWithUsername sendTo, (terr, toUser) ->
@@ -126,7 +135,6 @@ module.exports = (io, rclient) ->
                 apnConnection.pushNotification(note, device)
             for soc in manager.allSocketsForUser(username)
               soc.emit "RECEIVE", message.toObject()
-
 
     User.findOne({ username:username })
       .select('deviceIds contacts')
