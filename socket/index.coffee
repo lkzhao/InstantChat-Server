@@ -68,7 +68,7 @@ module.exports = (io, rclient) ->
     # view message
     socket.on "VIEW", (data) ->
       Message.load data.messageId, (err, msg)->
-        if err
+        if err || !msg
           return
 
         for soc in manager.allSocketsForUser(msg.fromUser.username)
