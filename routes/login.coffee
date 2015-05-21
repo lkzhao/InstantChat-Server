@@ -24,7 +24,7 @@ router.post '/', (req, res) ->
       res.json {success:false, error: "Failed to load user"}
     else
       if user.authenticate req.param("password")
-        token = jwt.sign profile, jwtSecret, { expiresInMinutes: 60*5 }
+        token = jwt.sign profile, jwtSecret, { expiresInMinutes: 60*24*30 }
         res.json {success:true, token: token}
       else
         res.json {success:false, error: "wrong password"}
