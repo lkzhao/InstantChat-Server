@@ -10,6 +10,7 @@ jwtSecret = process.env.JWT_SECRET
 
 # POST /login
 router.post '/', (req, res) ->
+  console.log req.body
   username = req.param("username")
   options =
     criteria:

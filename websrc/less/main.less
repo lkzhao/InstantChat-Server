@@ -1,0 +1,304 @@
+@import url(http://fonts.googleapis.com/css?family=Roboto:400,700);
+/**
+ * Eric Meyer's Reset CSS v2.0 (http://meyerweb.com/eric/tools/css/reset/)
+ * http://cssreset.com
+ */
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+  box-sizing: border-box;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+body {
+  line-height: 1;
+}
+ol, ul {
+  list-style: none;
+}
+blockquote, q {
+  quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: '';
+  content: none;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+html, body{
+  height:100%;
+}
+body{
+  font-family: 'Roboto', sans-serif;
+  padding: 0;
+  margin: 0;
+  position: relative;
+  background: #374A54;
+}
+em{
+  font-weight: 700;
+}
+
+.header{
+  position: fixed;
+  z-index: -1;
+  top:0;
+  left:0;
+  right:0;
+  height:300px;
+  background-color: #273C46;
+  color: #C6CAD0;
+  padding: 20px;
+}
+.container{
+  margin:100px auto 100px;
+  width: 1000px;
+}
+.roomView{
+  width: 800px;
+  background-color: #F8F9FE;
+  position: relative;
+  color: #969B9F;
+  border-radius: 10px;
+  overflow: hidden;
+  .tabContent{
+    padding: 20px;
+    min-height: 400px;
+  }
+  .messages{
+    padding-bottom: 80px;
+    &:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+  }
+  .message{
+    clear:both;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .incoming, .outgoing{
+    max-width: 80%;
+    padding:10px;
+    .bottomStatus{
+    }
+  }
+  .incoming{
+    float:left;
+    text-align: left;
+  }
+  .outgoing{
+    float:right;
+    text-align: right;
+  }
+  .bottomStatus{
+    font-size: 11px;
+    margin-top: 5px;
+    height: 11px;
+    margin-bottom: -5px;
+  }
+  .topStatus{
+    font-size: 11px;
+    margin-bottom:2px;
+    // margin-left: 8px;
+  }
+  .typing{
+    clear:both;
+  }
+  .chatInput{
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    &.fixed{
+      position: fixed;
+      bottom: 0;
+      width: 800px;
+      z-index: 1001;
+    }
+    opacity: 1;
+    background: linear-gradient(to bottom, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 100%); 
+    padding: 0px 20px;
+    transition: opacity 0.5s;
+  }
+  .loadPrevious{
+    clear:both;
+    text-align: center;
+    display: block;
+  }
+  transition: opacity 0.5s, transform 0.5s, -webkit-transform 0.5s;
+
+  header{
+    .roomName{
+      font-size: 30px;
+      padding-top: 100px;
+      padding-left: 50px;
+      color:white;
+    }
+    height: 200px;
+  }
+  .headerBar{
+    .roomName, .tabs, .menuButtons{
+      display:inline-block;
+      float:left;
+      height:48px;
+      vertical-align: middle;
+    }
+    .menuButtons{
+      margin-right: 30px;
+      float:right;
+    }
+    .roomName{
+      line-height: 48px;
+      padding: 0px 30px;
+      font-size: 26px;
+      color:white;
+      max-width: 200px;
+      margin-left: -200px;
+      opacity: 0;
+      transition: margin-left 0.5s, opacity 0.5s;
+    }
+    .tabs{
+      width: 400px;
+    }
+    opacity: 1;
+    position: absolute;
+    top: 152px;
+    width: 800px;
+    transition: opacity .5s;
+    box-shadow:  0 0 0 0 rgba(0, 0, 0, 0.5);
+  }
+  &.fixed{
+    .headerBar{
+      .roomName{
+        margin-left: 0;
+        opacity: 1;
+      }
+      z-index: 1000;
+      position: fixed;
+      top: 0;
+      box-shadow:  0 0 15px 0 rgba(0, 0, 0, 0.5);
+    }
+  }
+  &.transitioning{
+    margin-left: -1000px;
+    opacity: 0;
+  }
+}
+.rightSideBar{
+  position: fixed;
+  width: 1000px;
+  margin: 0 auto;
+  color: #A7A8AC;
+  padding: 20px;
+  padding-left: 820px;
+  .brand{
+    font-size: 30px;
+    margin-bottom: 70px;
+    text-decoration: none;
+    display: block;
+    color: #A7A8AC;
+    transition: color .3s;
+    &:visited{
+      color: #A7A8AC;
+    }
+    &:hover{
+      color: white;
+    }
+  }
+  .title{
+    margin-top: 30px;
+    margin-bottom: 15px;
+  }
+  .search input{
+    color: white !important;
+  }
+  .room{
+    color:#8F919F;
+    padding-left: 10px;
+    margin-bottom: 15px;
+    text-decoration: none;
+    display: block;
+    &.selected{
+      color:#389FFC;
+    }
+    em{
+      text-decoration: underline;
+    }
+  }
+}
+
+.center{
+  margin: 200px auto;
+  width: 400px;
+  padding: 20px;
+  // &>div:not(:first-child){
+  //   margin-top: 20px;
+  //   width: 100%;
+  // }
+}
+
+@media screen and (max-width: 1024px) {
+  .container{
+    margin: 100px auto 100px;
+    width: 768px;
+  }
+  .roomView{
+    width: 568px;
+    .chatInput.fixed{
+      width: 568px;
+    }
+    .headerBar{
+      width: 568px;
+      .tabs{
+        width:50%;
+      }
+    }
+  }
+  .rightSideBar{
+    width: 768px;
+    padding-left: 588px;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .container{
+    margin:0;
+    width: 100%;
+  }
+  .roomView{
+    width: 100%;
+    .chatInput.fixed{
+      width: 100%;
+    }
+    .headerBar{
+      width: 100%;
+      .tabs{
+        width:40%;
+      }
+    }
+  }
+}
