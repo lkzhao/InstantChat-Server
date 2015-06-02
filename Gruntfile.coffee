@@ -37,7 +37,7 @@ module.exports = (grunt) ->
         options:
           spawn: false
       express:
-        files:  [ "server.js", "models/*.js" ]
+        files:  [ "index.coffee", "routes/*.coffee", "models/*.coffee", "socket/*.coffee" ]
         tasks:  [ "express:dev" ]
         options:
           spawn: false

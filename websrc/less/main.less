@@ -31,6 +31,7 @@ footer, header, hgroup, menu, nav, section {
 }
 body {
   line-height: 1;
+  font-size: 0;
 }
 ol, ul {
   list-style: none;
@@ -49,40 +50,56 @@ table {
 }
 
 html, body{
-  height:100%;
 }
 body{
   font-family: 'Roboto', sans-serif;
   padding: 0;
   margin: 0;
   position: relative;
-  background: #374A54;
+  background: white;
+  padding-top: 64px;
 }
 em{
   font-weight: 700;
 }
 
+.main{
+  font-size: 14px;
+}
 .header{
   position: fixed;
-  z-index: -1;
-  top:0;
-  left:0;
-  right:0;
-  height:300px;
-  background-color: #273C46;
-  color: #C6CAD0;
-  padding: 20px;
+  z-index: 1002 !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  padding: 10px;
+  background: #66bb6a;
+  .profile{
+    float:right;
+    line-height: 44px;
+    color:white;
+    font-size: 16px;
+    vertical-align: middle;
+    img{
+      width: 44px;
+      height: 44px;
+      border-radius: 22px;
+      margin-left:15px;
+      display:inline-block;
+    }
+  }
+  border-bottom: 2px solid #27ae60;
 }
 .container{
-  margin:100px auto 100px;
-  width: 1000px;
+  // margin:100px auto 100px;
+  // width: 1000px;
+  position: relative;
+  width: 100%;
+  padding-left: 300px;
 }
 .roomView{
-  width: 800px;
-  background-color: #F8F9FE;
-  position: relative;
   color: #969B9F;
-  border-radius: 10px;
   overflow: hidden;
   .tabContent{
     padding: 20px;
@@ -130,18 +147,15 @@ em{
     clear:both;
   }
   .chatInput{
-    position: absolute;
+    position: fixed;
+    border-top: 1px solid #ddd;
     bottom: 0;
-    width: 100%;
-    &.fixed{
-      position: fixed;
-      bottom: 0;
-      width: 800px;
-      z-index: 1001;
-    }
+    left:300px;
+    right: 0;
+    z-index: 1001;
     opacity: 1;
-    background: linear-gradient(to bottom, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 100%); 
-    padding: 0px 20px;
+    background: white; 
+    padding: 5px 20px;
     transition: opacity 0.5s;
   }
   .loadPrevious{
@@ -208,44 +222,72 @@ em{
     opacity: 0;
   }
 }
-.rightSideBar{
+.sideBar{
   position: fixed;
-  width: 1000px;
-  margin: 0 auto;
+  background: white;
+  z-index: 1000;
+  padding-top: 64px;
+  width: 300px;
+  left: 0;
+  top: 0;
+  bottom: 0;
   color: #A7A8AC;
-  padding: 20px;
-  padding-left: 820px;
-  .brand{
-    font-size: 30px;
-    margin-bottom: 70px;
-    text-decoration: none;
-    display: block;
-    color: #A7A8AC;
-    transition: color .3s;
-    &:visited{
-      color: #A7A8AC;
-    }
-    &:hover{
-      color: white;
-    }
+  border-right: 1px solid #ddd;
+  header{
+    padding: 0 20px 20px;
   }
   .title{
     margin-top: 30px;
     margin-bottom: 15px;
   }
-  .search input{
-    color: white !important;
-  }
-  .room{
-    color:#8F919F;
-    padding-left: 10px;
-    margin-bottom: 15px;
-    text-decoration: none;
+  .conversation{
+    padding: 10px 20px;
     display: block;
+    font-size: 20px;
+    line-height: 34px;
+
+    color:#8F919F;
+    text-decoration: none;
+    .fa{
+      height: 34px;
+      width: 34px;
+      font-size: 34px !important;
+      float: left;
+      margin-right: 20px;
+      display: inline-block;
+    }
+    img{
+      height: 34px;
+      width: 34px;
+      float: left;
+      margin-right: 20px;
+      background: #666666;
+      border-radius: 17px;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+    }
+    &:visited{
+      color:#8F919F;
+      text-decoration: none;
+    }
+    &:hover{
+      background: #eee;
+    }
     &.selected{
       color:#389FFC;
+      &:visited{
+        color:#389FFC;
+      }
+      img{
+        border-color:#389FFC;
+      }
+    }
+    &:after {
+      content: "";
+      display: table;
+      clear: both;
     }
     em{
+      font-weight: 700;
       text-decoration: underline;
     }
   }
@@ -259,46 +301,4 @@ em{
   //   margin-top: 20px;
   //   width: 100%;
   // }
-}
-
-@media screen and (max-width: 1024px) {
-  .container{
-    margin: 100px auto 100px;
-    width: 768px;
-  }
-  .roomView{
-    width: 568px;
-    .chatInput.fixed{
-      width: 568px;
-    }
-    .headerBar{
-      width: 568px;
-      .tabs{
-        width:50%;
-      }
-    }
-  }
-  .rightSideBar{
-    width: 768px;
-    padding-left: 588px;
-  }
-}
-
-@media screen and (max-width: 767px) {
-  .container{
-    margin:0;
-    width: 100%;
-  }
-  .roomView{
-    width: 100%;
-    .chatInput.fixed{
-      width: 100%;
-    }
-    .headerBar{
-      width: 100%;
-      .tabs{
-        width:40%;
-      }
-    }
-  }
 }

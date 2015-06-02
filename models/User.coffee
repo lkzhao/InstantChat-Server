@@ -13,7 +13,7 @@ UserSchema = new Schema
   username: { type: String, default: '' }
   hashed_password: { type: String, default: '' }
   salt: { type: String, default: '' }
-  contacts: [{type : Schema.ObjectId, ref : 'User'}]
+  contacts: [{type: Schema.ObjectId, ref : 'User'}]
   deviceIds: [String]
 
 
@@ -128,9 +128,17 @@ UserSchema.statics =
 
   loadWithUsername: (username, cb) ->
     @findOne({username: username})
-      .select("name username contacts deviceIds")
+      .select("name username deviceIds contacts")
+      .populate('contacts')
       .exec(cb)
 
+UserSchema.options.toObject = {}
+UserSchema.options.toObject.transform = (doc, ret, options) ->
+  ret.id = ret._id
+  if ret.image && ret.image.large
+    ret.image = ret.image.large.url
+  delete ret._id
+  return ret
 
 UserSchema.plugin crate,
   storage:

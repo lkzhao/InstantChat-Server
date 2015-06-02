@@ -24,7 +24,6 @@ MessageSchema.statics =
 
 MessageSchema.options.toObject = {};
 MessageSchema.options.toObject.transform = (doc, ret, options) ->
-  console.log ret
   ret.fromUser = ret.fromUser.username
   ret.toUser = ret.toUser.username
   ret.id = ret._id

@@ -106,10 +106,16 @@ module.exports = (io, rclient) ->
           message.toUser = toUser
 
           console.log user.contacts
-          if user.contacts.indexOf(toUser.id) > -1
+          found = false
+          for contact in user.contacts
+            if contact.username == toUser.username
+              found = true
+              break
+
+          if found
             console.log "User has contact"
           else
-            user.contacts.push toUser
+            user.contacts.push toUser.id
             user.save()
 
           message.save (err, message) ->

@@ -14,6 +14,8 @@ Room = require "./room"
 Login = require "./login"
 Header = require "./header"
 Dashboard = require "./dashboard"
+SideBar = require "./sideBar"
+
 ThemeManager = require("material-ui/lib/styles/theme-manager")()
 injectTapEventPlugin = require "react-tap-event-plugin"
 
@@ -30,9 +32,9 @@ App = React.createClass
 
   componentWillMount: ->
     ThemeManager.setPalette
-      primary1Color: Colors.red400,
-      primary2Color: Colors.redA400,
-      primary3Color: Colors.redA200,
+      primary1Color: Colors.green400,
+      primary2Color: Colors.greenA400,
+      primary3Color: Colors.greenA200,
       accent1Color: Colors.blueGrey700,
       accent2Color: Colors.blueGrey600,
       accent3Color: Colors.blueGrey800,
@@ -45,6 +47,7 @@ App = React.createClass
     <div className="main">
       <Header />
       <RouteHandler {...this.props}/>
+      <SideBar {...this.props}/>
     </div>
 
 
@@ -54,11 +57,10 @@ NotFound = React.createClass
 
 routes =
   <Route name="app" path="/" handler={App}>
-    <Route name="room" path="room/:roomId" handler={Room}/>
+    <Route name="chat" path="chat/:roomId" handler={Room}/>
     <DefaultRoute handler={Dashboard}/>
     <Route name="login" path="login" handler={Login}/>
     <NotFoundRoute handler={NotFound} />
-    <Redirect from="room" to="room" params={roomId:"lobby"} />
   </Route>
 
 Router.run routes, (Handler, state) ->

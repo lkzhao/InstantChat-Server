@@ -5,7 +5,6 @@ React = require "react/addons"
 Router = require "react-router"
 Navigation = Router.Navigation
 
-RightSideBar = require "./rightSideBar"
 auth = require "../util/Auth"
 socket = auth.socket
 
@@ -35,7 +34,7 @@ Message = React.createClass
         bottomStatus = message.date.toString()
         style = 
           color: "white"
-          background: Colors.red400
+          background: Colors.green400
       else
         className = "incoming"
         topStatus = <em>{message.username}</em>
@@ -52,10 +51,10 @@ module.exports = React.createClass
   mixins:[Navigation]
   getInitialState: ->
     typing: []
-    fixedBar: false
-    fixedHeader: false
-    message: ""
     transitioning: false
+    loading: false
+    nomore: false
+    message: ""
     tab: 0
     messages:[]
 
@@ -83,43 +82,11 @@ module.exports = React.createClass
 
       @setState message:""
 
-  componentWillReceiveProps: (nextProps) ->
-    if nextProps.params.roomId != @props.params.roomId
-      if @timer
-        clearTimeout @timer
-      @timer = setTimeout =>
-        socket.emit 'change room', nextProps.params.roomId
-        rectBottom = $(".roomView").offset().top + $(".roomView").height() - $(window).height()
-        window.scrollTo(0, if rectBottom > 0 then rectBottom else 0)
-        @setState transitioning: false
-      , 1000
-      @setState transitioning: true
-
-  componentWillUpdate: (nextProps, nextState) ->
-    if @state.messages.length < nextState.messages.length
-      @previousHeight = $(".roomView").height()
-
-  componentDidUpdate: (prevProps, prevState) ->
-    if prevState.messages.length < @state.messages.length
-      window.scrollTo(0, $(window).scrollTop() + ($(".roomView").height() - @previousHeight))
-    if @state.fixedHeader == prevState.fixedHeader and @state.fixedBar == prevState.fixedBar
-      @handleScroll()
-
   handleScroll: ->
     scrollTop = $(window).scrollTop()
     scrollBottom = scrollTop + $(window).height()
     rectTop = $(".roomView").offset().top
     rectBottom = rectTop + $(".roomView").height()
-
-    if scrollTop >= rectTop+150 && !@state.fixedHeader
-      @setState fixedHeader: true
-    else if scrollTop < rectTop+150 && @state.fixedHeader
-      @setState fixedHeader: false
-
-    if scrollBottom > rectBottom && @state.fixedBar
-      @setState fixedBar: false
-    else if scrollBottom <= rectBottom && !@state.fixedBar
-      @setState fixedBar: true
 
   handleEnterRoom: (data) ->
     message = 
@@ -142,16 +109,33 @@ module.exports = React.createClass
       typing: @state.typing.filter ->
         @ != data.username
 
+  componentWillMount: ->
+    if !auth.loggedIn()
+      @transitionTo "login"
+
   componentDidMount: ->
     $(window).on 'scroll', @handleScroll
     socket.on 'RECEIVE', @handleNewMessage
     socket.on 'typing', @handleTyping
     socket.on 'stop typing', @handleStopTyping
     console.log auth.username, @props.params.roomId
-    #TODO check if logged in
-    if !auth.loggedIn()
-      @transitionTo "login"
 
+    @getInitialMessages @props.params.roomId
+
+  componentWillReceiveProps: (nextProps) ->
+    if nextProps.params.roomId != @props.params.roomId
+      if @timer
+        clearTimeout @timer
+      @getInitialMessages nextProps.params.roomId
+      @setState transitioning: true
+
+  componentWillUpdate: (nextProps, nextState) ->
+    if @state.messages.length < nextState.messages.length
+      @previousHeight = $(".roomView").height()
+
+  componentDidUpdate: (prevProps, prevState) ->
+    if prevState.messages[prevState.messages.length - 1] != @state.messages[@state.messages.length - 1]
+      window.scrollTo(0, $(window).scrollTop() + ($(".roomView").height() - @previousHeight))
 
   componentWillUnmount: ->
     $(window).off 'scroll', @handleScroll
@@ -159,8 +143,40 @@ module.exports = React.createClass
     socket.removeListener 'typing', @handleTyping
     socket.removeListener 'stop typing', @handleStopTyping
 
+  getInitialMessages: (user) ->
+    @setState loading:true
+    $.get("/user/conversation/#{user}?token=#{auth.token}")
+      .done( (data)=>
+        rectBottom = $(".roomView").offset().top + $(".roomView").height() - $(window).height()
+        window.scrollTo(0, if rectBottom > 0 then rectBottom else 0)
+        @setState 
+          messages: data
+          transitioning: false
+          loading: false
+          nomore: data.length == 0
+      ).fail( =>
+        @setState loading:false
+      )
+
   handleTabChange: (index) ->
     @setState tab:index
+
+  loadPrevious: ->
+    before = @state.messages[0].date || Date.now()
+    before = before.toString()
+    @setState loading:true
+    $.get("/user/conversation/#{@props.params.roomId}?token=#{auth.token}&before=#{before}")
+      .done( (data)=>
+        rectBottom = $(".roomView").offset().top + $(".roomView").height() - $(window).height()
+        window.scrollTo(0, if rectBottom > 0 then rectBottom else 0)
+        @setState 
+          messages: data.concat(@state.messages)
+          transitioning: false
+          loading: false
+          nomore: data.length == 0
+      ).fail( =>
+        @setState loading:false
+      )
 
   render: ->
     messages = @state.messages.map (message) =>
@@ -169,67 +185,26 @@ module.exports = React.createClass
     className = "roomView"
     if @state.transitioning
       className += " transitioning"
-    if @state.fixedHeader
-      className += " fixed"
-    barClassName = if @state.fixedBar then "fixed chatInput" else "chatInput"
 
-    tabContent = null
-    if @state.tab == 0
-      tabContent = <div>
+    topControl = null
+    if @state.loading
+      topControl = <FontIcon className="fa fa-spinner fa-pulse"/>
+    else if !@state.nomore
+      topControl = <RaisedButton  onClick={@loadPrevious} primary={true} label="Load Previous" />
+
+    <div className="container">
+      <div className={className}>
         <div className="messages tabContent">
+          <div className="loadPrevious">
+            {topControl}
+          </div>
           {messages}
         </div>
         <div className="typing">
         </div>
-        <div className={barClassName}>
+        <div className="chatInput">
           <TextField style={width:"100%"} className="input" hintText="Type your message"
             multiLine={true} value={@state.message} onChange={@handleChange} onEnterKeyDown={@handleEnterKeyDown} />
         </div>
       </div>
-    else if @state.tab == 1
-      tabContent = <div className="tabContent">
-        <p> 
-          This is another example of a tab template! 
-        </p> 
-        <p> 
-          Fair warning - the next tab routes to home! 
-        </p> 
-      </div>
-    else if @state.tab == 2
-      tabContent = <div className="tabContent">
-        <p> 
-          This is another example of a tab template! 
-        </p> 
-        <p> 
-          Fair warning - the next tab routes to home! 
-        </p> 
-      </div>
-
-    <div className="container">
-      <RightSideBar {...this.props}/>
-
-      <Paper zDepth={2} className={className}>
-        <header style={background:Colors.red400}>
-          <div className="roomName">{@props.params.roomId}</div>
-          <div className="headerBar" style={background:Colors.red400}>
-            <div className="roomName">{@props.params.roomId}</div>
-            <div className="tabs">
-              <Tabs onChange={@handleTabChange}> 
-                  <Tab label="Chat">
-                  </Tab> 
-                  <Tab label="Files">
-                  </Tab>
-                  <Tab label="Users">
-                  </Tab>
-              </Tabs>
-            </div>
-            <div className="menuButtons">
-              <IconButton tooltip="Add to favorite">
-                <FontIcon style={color:"white"} className="fa fa-heart"/>
-              </IconButton>
-            </div>
-          </div>
-        </header>
-        {tabContent}
-      </Paper>
     </div>
