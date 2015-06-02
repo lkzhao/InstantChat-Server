@@ -1,5 +1,4 @@
 
-socket = require "../util/socket"
 React = require "react/addons"
 Router = require "react-router"
 Link = Router.Link

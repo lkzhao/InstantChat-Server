@@ -81,6 +81,8 @@ module.exports = (io, rclient) ->
 
     # send message
     socket.on "SEND", (data, fn) ->
+      if !fn
+        fn = ->
       sendTo = data.sendTo
 
       messageData = 

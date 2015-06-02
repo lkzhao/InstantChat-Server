@@ -6,7 +6,7 @@ Schema = mongoose.Schema
 MessageSchema = new Schema
   fromUser: {type : Schema.ObjectId, ref : 'User'},
   toUser: {type : Schema.ObjectId, ref : 'User'},
-  date: { type: String, default: '' }
+  date: { type: Date }
   type: { type: String, default: 'text' }
   content: { type: String, default: '' }
   binaryContent: { type: Buffer }

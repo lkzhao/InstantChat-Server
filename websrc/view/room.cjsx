@@ -1,12 +1,13 @@
-getTimeStamp = ->
-  date = new Date(Date.now())
-  date.toString()
 
-socket = require "../util/socket"
 React = require "react/addons"
+
+
+Router = require "react-router"
+Navigation = Router.Navigation
 
 RightSideBar = require "./rightSideBar"
 auth = require "../util/Auth"
+socket = auth.socket
 
 mui = require "material-ui"
 Colors = require 'material-ui/src/styles/colors'
@@ -25,21 +26,20 @@ Message = React.createClass
     bottomStatus = ""
     topStatus = ""
     content = message.content
-
     if message.announcement
       content = message.announcement
     else
       style = {}
       if message.fromUser == auth.username
         className = "outgoing"
-        bottomStatus = message.date
+        bottomStatus = message.date.toString()
         style = 
           color: "white"
           background: Colors.red400
       else
         className = "incoming"
         topStatus = <em>{message.username}</em>
-        bottomStatus = message.date
+        bottomStatus = message.date.toString()
 
       return <Paper zDepth={1} style={style} className={className+" message"}>
         <div className="topStatus">{topStatus}</div>
@@ -49,6 +49,7 @@ Message = React.createClass
     <div className={className+" message"}>{content}</div>
 
 module.exports = React.createClass
+  mixins:[Navigation]
   getInitialState: ->
     typing: []
     fixedBar: false
@@ -67,17 +68,18 @@ module.exports = React.createClass
       message: e.target.value
 
   sendMessage: ->
-    time = getTimeStamp()
-    # if there is a non-empty message and a socket connection
     if @state.message
       message =
         sendTo: @props.params.roomId
         content: @state.message
-        date: time
+        date: Date.now().toString()
+        type: "text"
+        viewTime: null
+        messageId: null
 
-      # tell server to execute 'new message' and send along one parameter
       socket.emit 'SEND', message, (data) ->
-        console.log "SEND", data
+        if data.messageId
+          console.log "Success"
 
       @setState message:""
 
@@ -126,6 +128,8 @@ module.exports = React.createClass
       messages: @state.messages.concat([message])
 
   handleNewMessage: (data) ->
+    console.log data
+    data.date = new Date(data.date)
     @setState messages: @state.messages.concat([data])
     @handleScroll()
 
@@ -145,6 +149,9 @@ module.exports = React.createClass
     socket.on 'stop typing', @handleStopTyping
     console.log auth.username, @props.params.roomId
     #TODO check if logged in
+    if !auth.loggedIn()
+      @transitionTo "login"
+
 
   componentWillUnmount: ->
     $(window).off 'scroll', @handleScroll
