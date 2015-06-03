@@ -31,7 +31,7 @@ Auth =
       else
         callback false, data.error
     ).fail((jqXHR, textStatus, errorThrown)=>
-      callback true
+      callback false
     )
 
   logout: ->

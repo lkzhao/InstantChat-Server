@@ -2,6 +2,7 @@
 mui = require "material-ui"
 AppBar =  mui.AppBar
 RaisedButton = mui.RaisedButton
+FlatButton = mui.FlatButton
 Paper = mui.Paper
 DialogWindow = mui.DialogWindow
 Menu = mui.Menu
@@ -26,6 +27,27 @@ module.exports = React.createClass
           profile: data
       ).fail( =>
       )
+  handleUpload: ->
+    data = new FormData()
+    imageFile = $('#imageUpload')[0].files[0]
+    if !imageFile
+      return
+    data.append "image", imageFile
+    $.ajax(
+      url: "/user/upload?token=#{auth.token}",
+      data: data,
+      cache: false,
+      contentType: false,
+      processData: false,
+      type: 'POST'
+    ).done( (data) =>
+      @componentDidMount()
+    ).fail( ->
+
+    )
+  handleImageClick: ->
+    $("#imageUpload").click()
+
   handleProfileOpen: ->
     @refs.dialogWindow.show()
 
@@ -54,6 +76,7 @@ module.exports = React.createClass
       <div className="profile" onClick={@handleProfileOpen}>
         <img src={@state.profile.image}/>
       </div>
+      <input type="file" id="imageUpload"  style={display:"none"} onChange={@handleUpload}/>
       <DialogWindow
         ref="dialogWindow"
         title={name}
@@ -63,7 +86,12 @@ module.exports = React.createClass
         modal={true}>
         <div className="dialogHeader">
         </div>
-        <img src={@state.profile.image}/>
+        <div className="profileImage">
+          <img src={@state.profile.image} />
+          <div id="editImageButton">
+            <FlatButton style={width:"100%"} label="Edit" primary={true} onClick={@handleImageClick}/>
+          </div>
+        </div>
         <div className="name">{name}</div>
         <div className="dialogContent">
           <Menu menuItems={filterMenuItems} autoWidth={false}/>

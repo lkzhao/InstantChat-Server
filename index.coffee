@@ -19,5 +19,7 @@ for file in fs.readdirSync("#{__dirname}/models")
 router = require('./routes')(app)
 socket = require('./socket')(io)
 
-http.listen 80, ->
-  console.log 'listening on *:80'
+nodeEnv = process.env.NODE_ENV
+port = (if nodeEnv=="production" then 80 else 3000)
+http.listen port, ->
+  console.log "listening on *:#{port}"
