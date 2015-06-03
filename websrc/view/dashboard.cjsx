@@ -1,6 +1,13 @@
 React = require "react/addons"
 Router = require "react-router"
+auth = require "../util/Auth"
 Link = Router.Link
+
+Router = require "react-router"
+Navigation = Router.Navigation
+
+Header = require "./header"
+SideBar = require "./sideBar"
 
 mui = require "material-ui"
 Colors = require 'material-ui/src/styles/colors'
@@ -10,12 +17,13 @@ FontIcon = mui.FontIcon
 RaisedButton = mui.RaisedButton
 
 module.exports = React.createClass
+  mixins:[Navigation]
+  componentWillMount: ->
+    if !auth.loggedIn()
+      @transitionTo "login"
+
   render: ->
-    <Paper className="center" zDepth={5}>
-      <div>Landing Page</div>
-      <div>Nothing here yet</div>
-      <RaisedButton linkButton={true} href="/#/room/lobby" primary={true} label="Chat Room Page">
-      </RaisedButton>
-      <RaisedButton linkButton={true} href="/#/login" secondary={true} label="Login Page">
-      </RaisedButton>
-    </Paper>
+    <div>
+      <Header />
+      <SideBar {...this.props}/>
+    </div>

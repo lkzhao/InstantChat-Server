@@ -8,12 +8,12 @@ if !username
 Auth = 
   username: username
   token: token
-  socket: io.connect "", query:"token=#{token}"
+  socket: io.connect("", query:"token=#{token}")
 
   loggedIn: ->
-    return @token && @username
+    return @token and @username
 
-  authenticate: (username, password, callback) =>
+  authenticate: (username, password, callback) ->
     console.log username, password
     $.ajax(
       url: "#{window.location.origin}/login"
@@ -21,13 +21,12 @@ Auth =
       contentType : "application/json"
       data: JSON.stringify(username: username, password: password)
     ).done((data, textStatus, jqXHR) =>
-      console.log data
       if data.success && data.token
         localStorage["username"] = username
         @username = username
         localStorage["token"] = data.token
         @token = localStorage["token"]
-        @socket.connect "", query:"token=#{@token}"
+        @socket.connect("", query:"token=#{token}")
         callback true
       else
         callback false, data.error
@@ -36,8 +35,8 @@ Auth =
     )
 
   logout: ->
-    localStorage["token"] = null
-    localStorage["username"] = null
+    localStorage.removeItem "token"
+    localStorage.removeItem "username"
     @username = null
     @token = null
 

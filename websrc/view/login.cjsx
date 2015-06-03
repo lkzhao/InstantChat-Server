@@ -32,6 +32,10 @@ module.exports = React.createClass
   handlePasswordChange: (e) ->
     @setState password:e.target.value
 
+  componentWillMount: ->
+    if auth.loggedIn()
+      @transitionTo "app"
+
   handleLogin: ->
     if !@state.username
       @setState usernameError:"Username cannot be empty"
@@ -42,7 +46,7 @@ module.exports = React.createClass
     @setState loading: true
     auth.authenticate @state.username, @state.password, (success, error)=>
       if success
-        @transitionTo "room", roomId:"lobby"
+        @transitionTo "app"
       else
         @setState 
           globalError:"Failed to login"

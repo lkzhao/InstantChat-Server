@@ -22,12 +22,12 @@ router.post '/', (req, res) ->
 
   User.load options, (err, user) ->
     if err || !user
-      res.json {success:false, error: "Failed to load user"}
+      res.send {success:false, error: "Failed to load user"}
     else
       if user.authenticate req.param("password")
         token = jwt.sign profile, jwtSecret, { expiresInMinutes: 60*24*30 }
-        res.json {success:true, token: token}
+        res.send {success:true, token: token}
       else
-        res.json {success:false, error: "wrong password"}
+        res.send {success:false, error: "wrong password"}
 
 module.exports = router

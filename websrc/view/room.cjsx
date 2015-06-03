@@ -17,6 +17,11 @@ Tab = mui.Tab
 IconButton = mui.IconButton
 FontIcon = mui.FontIcon
 RaisedButton = mui.RaisedButton
+FloatingActionButton = mui.FloatingActionButton
+
+
+Header = require "./header"
+SideBar = require "./sideBar"
 
 Message = React.createClass
   render: ->
@@ -31,23 +36,20 @@ Message = React.createClass
       style = {}
       if message.fromUser == auth.username
         className = "outgoing"
-        bottomStatus = message.date.toString()
         style = 
           color: "white"
           background: Colors.green400
       else
         className = "incoming"
         topStatus = <em>{message.username}</em>
-        bottomStatus = message.date.toString()
 
       return <Paper zDepth={1} style={style} className={className+" message"}>
         <div className="topStatus">{topStatus}</div>
         <div className="bubble">{content}</div>
-        <div className="bottomStatus">{bottomStatus}</div>
       </Paper>
     <div className={className+" message"}>{content}</div>
 
-module.exports = React.createClass
+ChatView = React.createClass
   mixins:[Navigation]
   getInitialState: ->
     typing: []
@@ -57,10 +59,6 @@ module.exports = React.createClass
     message: ""
     tab: 0
     messages:[]
-
-  handleEnterKeyDown: (e) ->
-    @sendMessage()
-    e.preventDefault()
 
   handleChange: (e) ->
     @setState
@@ -192,6 +190,9 @@ module.exports = React.createClass
     else if !@state.nomore
       topControl = <RaisedButton  onClick={@loadPrevious} primary={true} label="Load Previous" />
 
+    sendButtonClassName = "sendButton "+(if @state.message.length>0 then "animated bounceIn" else "")
+
+
     <div className="container">
       <div className={className}>
         <div className="messages tabContent">
@@ -203,8 +204,20 @@ module.exports = React.createClass
         <div className="typing">
         </div>
         <div className="chatInput">
-          <TextField style={width:"100%"} className="input" hintText="Type your message"
-            multiLine={true} value={@state.message} onChange={@handleChange} onEnterKeyDown={@handleEnterKeyDown} />
+          <TextField key="chatInput" ref="chatInput" style={width:"100%"} className="input" hintText="Type your message"
+            multiLine={true} value={@state.message} onChange={@handleChange} />
+          
+          <div className={sendButtonClassName}>
+            <FloatingActionButton secondary=true iconClassName="fa fa-paper-plane-o" onClick={@sendMessage}/>
+          </div>
         </div>
       </div>
+    </div>
+
+module.exports = React.createClass
+  render: ->
+    <div>
+      <Header />
+      <SideBar {...this.props}/>
+      <ChatView {...this.props}/>
     </div>

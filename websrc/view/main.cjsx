@@ -12,9 +12,7 @@ Redirect = Router.Redirect
 
 Room = require "./room"
 Login = require "./login"
-Header = require "./header"
 Dashboard = require "./dashboard"
-SideBar = require "./sideBar"
 
 ThemeManager = require("material-ui/lib/styles/theme-manager")()
 injectTapEventPlugin = require "react-tap-event-plugin"
@@ -45,9 +43,7 @@ App = React.createClass
 
   render: ->
     <div className="main">
-      <Header />
       <RouteHandler {...this.props}/>
-      <SideBar {...this.props}/>
     </div>
 
 
