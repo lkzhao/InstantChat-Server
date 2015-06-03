@@ -56,9 +56,9 @@ routes =
     <Route name="chat" path="chat/:roomId" handler={Room}/>
     <DefaultRoute handler={Dashboard}/>
     <Route name="login" path="login" handler={Login}/>
+    <Route name="signup" path="signup" handler={Login}/>
     <NotFoundRoute handler={NotFound} />
   </Route>
 
 Router.run routes, (Handler, state) ->
-  params = state.params
-  React.render <Handler params={params}/>, document.body
+  React.render <Handler {...state}/>, document.body

@@ -7,8 +7,7 @@ router.post '/', (req, res) ->
   user = new User req.body
   user.save (err) ->
     if err
-      allErrors = (info.message for field, info of err.errors)
-      res.json {success: false, error: allErrors.join(", ")}
+      res.json {success: false, error: err.errors}
     else
       res.json {success: true}
 

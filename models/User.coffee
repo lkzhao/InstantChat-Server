@@ -45,6 +45,17 @@ UserSchema.path('email').validate((email, fn) ->
     fn(true)
 , 'Email already exists')
 
+UserSchema.path('username').validate((username, fn) ->
+  User = mongoose.model('User')
+  # Check only when it is a new user or when email field is modified
+  if @isNew || @isModified('username')
+    User.find({ username: username }).exec((err, users) ->
+      fn !err && users.length == 0
+    )
+  else 
+    fn(true)
+, 'Username already exists')
+
 UserSchema.path('username').validate((username) ->
   return username.length
 , 'Username cannot be blank')
