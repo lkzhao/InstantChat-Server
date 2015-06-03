@@ -48,6 +48,8 @@ module.exports = React.createClass
       @transitionTo "app"
 
   handleLogin: ->
+    if @state.loading
+      return
     if !@state.username
       @setState usernameError:"Username cannot be blank"
     if !@state.password
@@ -60,31 +62,26 @@ module.exports = React.createClass
         @transitionTo "app"
       else
         @setState 
-          globalError:"Failed to login"
+          globalError: error
           loading: false
 
   handleSignup: ->
+    if @state.loading
+      return
     @setState loading: true
-    $.ajax(
-      url: "#{window.location.origin}/signup"
-      type: "POST"
-      contentType : "application/json"
-      data: JSON.stringify(
-        username: @state.username
-        password: @state.password
-        email: @state.email
-        name: @state.name
-      )
-    ).done((data, textStatus, jqXHR) =>
-      if data.success
-        @transitionTo "login"
-      else if data.error
+    auth.signup @state.username, @state.password, @state.email, @state.name, (success, error) =>
+      if success
+        @transitionTo "signupSuccess"
+      else
         errors = 
           loading: false
           usernameError: null
           passwordError: null
           emailError: null
-        for field, info of data.error
+          globalError: null
+        for field, info of error
+          if field == "error"
+            errors.globalError = info
           if field == "email"
             errors.emailError = info.message
           else if field == "hashed_password"
@@ -92,10 +89,6 @@ module.exports = React.createClass
           else if field == "username"
             errors.usernameError = info.message
         @setState errors
-    ).fail((jqXHR, textStatus, errorThrown)=>
-      @setState loading: false
-    )
-    return
 
   goToRoute: (tab) ->
     @setState globalError:null
@@ -111,12 +104,14 @@ module.exports = React.createClass
               key="username"
               style={width:"100%"}
               hintText="johnappleseed"
-              floatingLabelText="Username" value={@state.username} onChange={@handleUsernameChange} errorText={@state.usernameError} />
+              floatingLabelText="Username" value={@state.username} onChange={@handleUsernameChange} errorText={@state.usernameError}
+              disabled={@state.loading} />
             <TextField
               key="password"
               style={width:"100%"}
               type="password"
-              floatingLabelText="Password" value={@state.password} onChange={@handlePasswordChange} errorText={@state.passwordError} />
+              floatingLabelText="Password" value={@state.password} onChange={@handlePasswordChange} errorText={@state.passwordError}
+              disabled={@state.loading} />
             <FlatButton style={width:"100%"} onClick={@handleLogin} secondary={true}>
               {if @state.loading then <FontIcon className="fa fa-spinner fa-pulse"/> else <span>Login</span>}
             </FlatButton>
@@ -124,28 +119,32 @@ module.exports = React.createClass
         </Tab>
         <Tab label="Signup" onActive={@goToRoute} route="signup">
           <div className="inner">
-            <div>{@state.globalError}</div>
+            <div className="error">{@state.globalError}</div>
             <TextField
               key="name"
               style={width:"100%"}
               hintText="John Appleseed"
-              floatingLabelText="Name" valueLink={@linkState('name')} />
+              floatingLabelText="Name" valueLink={@linkState('name')}
+              disabled={@state.loading} />
             <TextField
               key="username"
               style={width:"100%"}
               hintText="johnappleseed"
-              floatingLabelText="Username" value={@state.username} onChange={@handleUsernameChange} errorText={@state.usernameError} />
+              floatingLabelText="Username" value={@state.username} onChange={@handleUsernameChange} errorText={@state.usernameError}
+              disabled={@state.loading} />
             <TextField
               key="email"
               style={width:"100%"}
               hintText="example@instantchat.com"
-              floatingLabelText="Email" value={@state.email} onChange={@handleEmailChange} errorText={@state.emailError} />
+              floatingLabelText="Email" value={@state.email} onChange={@handleEmailChange} errorText={@state.emailError}
+              disabled={@state.loading} />
             <TextField
               key="password"
               style={width:"100%"}
               type="password"
-              floatingLabelText="Password" value={@state.password} onChange={@handlePasswordChange} errorText={@state.passwordError} />
-            <FlatButton style={width:"100%"} onClick={@handleSignup} secondary={true}>
+              floatingLabelText="Password" value={@state.password} onChange={@handlePasswordChange} errorText={@state.passwordError}
+              disabled={@state.loading} />
+            <FlatButton style={width:"100%"} disabled={@state.loading} onClick={@handleSignup} secondary={true}>
               {if @state.loading then <FontIcon className="fa fa-spinner fa-pulse"/> else <span>Sign up</span>}
             </FlatButton>
           </div>

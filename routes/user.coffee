@@ -4,7 +4,7 @@ mongoose = require 'mongoose'
 User = mongoose.model 'User'
 Message = mongoose.model 'Message'
 jwt = require 'jsonwebtoken'
-
+manager = require "../socket/manager"
 
 jwtSecret = process.env.JWT_SECRET
 
@@ -32,10 +32,19 @@ router.post '/upload', (req, res, next) ->
     if err 
       return next(err)
     req.user.save (err) ->
-      console.log "save failed #{err}"
       if err
         return next(err);
-      res.send 'Upload image success!'
+      
+      User.findOne({username: req.user.username})
+      .select("name username image.large")
+      .populate('contacts')
+      .exec (err, user) ->
+        if err || !user
+          return next new Error "Failed to load user"
+        userObj = user.toObject()
+        res.send userObj
+        for soc in manager.allSocketsForUser(req.user.username)
+          soc.emit "profileChange", userObj
 
 router.get '/conversation/:username', (req, res) ->
   username = req.params.username

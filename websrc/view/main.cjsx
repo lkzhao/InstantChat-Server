@@ -13,6 +13,7 @@ Redirect = Router.Redirect
 Room = require "./room"
 Login = require "./login"
 Dashboard = require "./dashboard"
+SignupSuccess = require "./signupSuccess"
 
 ThemeManager = require("material-ui/lib/styles/theme-manager")()
 injectTapEventPlugin = require "react-tap-event-plugin"
@@ -57,6 +58,7 @@ routes =
     <DefaultRoute handler={Dashboard}/>
     <Route name="login" path="login" handler={Login}/>
     <Route name="signup" path="signup" handler={Login}/>
+    <Route name="signupSuccess" path="signupSuccess" handler={SignupSuccess} />
     <NotFoundRoute handler={NotFound} />
   </Route>
 

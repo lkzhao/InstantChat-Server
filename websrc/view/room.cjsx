@@ -6,6 +6,7 @@ Router = require "react-router"
 Navigation = Router.Navigation
 
 auth = require "../util/Auth"
+RequireAuth = require "../util/requireLogin"
 socket = auth.socket
 
 mui = require "material-ui"
@@ -50,7 +51,7 @@ Message = React.createClass
     <div className={className+" message"}>{content}</div>
 
 ChatView = React.createClass
-  mixins:[Navigation]
+  mixins:[RequireAuth]
   getInitialState: ->
     typing: []
     transitioning: false
@@ -107,18 +108,6 @@ ChatView = React.createClass
       typing: @state.typing.filter ->
         @ != data.username
 
-  componentWillMount: ->
-    if !auth.loggedIn()
-      @transitionTo "login"
-
-  componentDidMount: ->
-    $(window).on 'scroll', @handleScroll
-    socket.on 'RECEIVE', @handleNewMessage
-    socket.on 'typing', @handleTyping
-    socket.on 'stop typing', @handleStopTyping
-    console.log auth.username, @props.params.roomId
-
-    @getInitialMessages @props.params.roomId
 
   componentWillReceiveProps: (nextProps) ->
     if nextProps.params.roomId != @props.params.roomId
@@ -134,6 +123,15 @@ ChatView = React.createClass
   componentDidUpdate: (prevProps, prevState) ->
     if prevState.messages[prevState.messages.length - 1] != @state.messages[@state.messages.length - 1]
       window.scrollTo(0, $(window).scrollTop() + ($(".roomView").height() - @previousHeight))
+
+  componentDidMount: ->
+    $(window).on 'scroll', @handleScroll
+    socket.on 'RECEIVE', @handleNewMessage
+    socket.on 'typing', @handleTyping
+    socket.on 'stop typing', @handleStopTyping
+    console.log auth.username, @props.params.roomId
+
+    @getInitialMessages @props.params.roomId
 
   componentWillUnmount: ->
     $(window).off 'scroll', @handleScroll

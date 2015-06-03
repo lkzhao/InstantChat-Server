@@ -12,39 +12,19 @@ Router = require "react-router"
 Navigation = Router.Navigation
 
 auth = require "../util/Auth"
+RequireProfile = require "../util/requireProfile"
 
 React = require "react/addons"
 
 module.exports = React.createClass
-  mixins:[Navigation]
-  getInitialState: ->
-    profile:{}
+  mixins:[Navigation, RequireProfile]
 
-  componentDidMount: ->
-    $.get("/user/profile/#{auth.username}?token=#{auth.token}")
-      .done( (data)=>
-        @setState 
-          profile: data
-      ).fail( =>
-      )
   handleUpload: ->
-    data = new FormData()
-    imageFile = $('#imageUpload')[0].files[0]
-    if !imageFile
-      return
-    data.append "image", imageFile
-    $.ajax(
-      url: "/user/upload?token=#{auth.token}",
-      data: data,
-      cache: false,
-      contentType: false,
-      processData: false,
-      type: 'POST'
-    ).done( (data) =>
-      @componentDidMount()
-    ).fail( ->
+    auth.uploadImage $('#imageUpload')[0].files[0], (success) ->
+      if !success
+        return
+        # TODO show error
 
-    )
   handleImageClick: ->
     $("#imageUpload").click()
 

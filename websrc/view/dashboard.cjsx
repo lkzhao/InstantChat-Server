@@ -4,7 +4,7 @@ auth = require "../util/Auth"
 Link = Router.Link
 
 Router = require "react-router"
-Navigation = Router.Navigation
+RequireAuth = require "../util/requireLogin"
 
 Header = require "./header"
 SideBar = require "./sideBar"
@@ -17,10 +17,7 @@ FontIcon = mui.FontIcon
 RaisedButton = mui.RaisedButton
 
 module.exports = React.createClass
-  mixins:[Navigation]
-  componentWillMount: ->
-    if !auth.loggedIn()
-      @transitionTo "login"
+  mixins:[RequireAuth]
 
   render: ->
     <div>
