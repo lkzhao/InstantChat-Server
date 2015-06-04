@@ -140,6 +140,26 @@ body {
 em {
   font-weight: 700;
 }
+h1,
+h2,
+h3 {
+  margin-bottom: 10px;
+}
+h1 {
+  font-size: 34px;
+  color: #2c3e50;
+  margin-bottom: 15px;
+}
+h1 small {
+  font-size: 28px;
+  color: #969B9F;
+}
+h2 {
+  font-size: 28px;
+}
+h3 {
+  font-size: 24px;
+}
 .main {
   font-size: 14px;
 }
@@ -162,6 +182,7 @@ em {
   vertical-align: middle;
 }
 .header .profile img {
+  background: #eee;
   width: 44px;
   height: 44px;
   border-radius: 22px;
@@ -175,9 +196,13 @@ em {
   background: #66bb6a;
   width: 100%;
   height: 200px;
+  padding: 20px;
   border-top-right-radius: 2px;
   border-top-left-radius: 2px;
   margin-bottom: 80px;
+}
+.dialogContent {
+  padding: 20px 50px;
 }
 .profileDialog {
   width: 400px;
@@ -192,6 +217,7 @@ em {
   border-radius: 8px;
 }
 .profileDialog .profileImage img {
+  background: #eee;
   height: 140px;
   width: 140px;
 }
@@ -215,9 +241,6 @@ em {
   left: 220px;
   color: white;
   font-size: 28px;
-}
-.profileDialog .dialogContent {
-  padding: 20px 50px;
 }
 .container {
   position: relative;

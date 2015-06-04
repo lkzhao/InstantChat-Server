@@ -7,6 +7,8 @@ Navigation = Router.Navigation
 
 auth = require "../util/Auth"
 RequireAuth = require "../util/requireLogin"
+RequireProfile = require "../util/requireProfile"
+AddFriend = require "./addFriend"
 socket = auth.socket
 
 mui = require "material-ui"
@@ -51,13 +53,14 @@ Message = React.createClass
     <div className={className+" message"}>{content}</div>
 
 ChatView = React.createClass
-  mixins:[RequireAuth]
+  mixins:[RequireAuth, RequireProfile]
   getInitialState: ->
     typing: []
     transitioning: false
     loading: false
     nomore: false
     message: ""
+    userProfile: {}
     tab: 0
     messages:[]
 
@@ -143,13 +146,12 @@ ChatView = React.createClass
     @setState loading:true
     $.get("/user/conversation/#{user}?token=#{auth.token}")
       .done( (data)=>
-        rectBottom = $(".roomView").offset().top + $(".roomView").height() - $(window).height()
-        window.scrollTo(0, if rectBottom > 0 then rectBottom else 0)
         @setState 
-          messages: data
+          messages: data.messages || []
           transitioning: false
           loading: false
-          nomore: data.length == 0
+          nomore: data.messages.length == 0
+          userProfile: data.userProfile
       ).fail( =>
         @setState loading:false
       )
@@ -163,13 +165,11 @@ ChatView = React.createClass
     @setState loading:true
     $.get("/user/conversation/#{@props.params.roomId}?token=#{auth.token}&before=#{before}")
       .done( (data)=>
-        rectBottom = $(".roomView").offset().top + $(".roomView").height() - $(window).height()
-        window.scrollTo(0, if rectBottom > 0 then rectBottom else 0)
         @setState 
-          messages: data.concat(@state.messages)
+          messages: data.messages.concat(@state.messages)
           transitioning: false
           loading: false
-          nomore: data.length == 0
+          nomore: data.messages.length == 0
       ).fail( =>
         @setState loading:false
       )
@@ -182,33 +182,49 @@ ChatView = React.createClass
     if @state.transitioning
       className += " transitioning"
 
+
+    sendButtonClassName = "sendButton "+(if @state.message.length>0 then "animated bounceIn" else "")
+
     topControl = null
-    if @state.loading
+    if @state.loading || !@state.profile
       topControl = <FontIcon className="fa fa-spinner fa-pulse"/>
     else if !@state.nomore
       topControl = <RaisedButton  onClick={@loadPrevious} primary={true} label="Load Previous" />
 
-    sendButtonClassName = "sendButton "+(if @state.message.length>0 then "animated bounceIn" else "")
-
+    isFriend = false
+    if @state.profile.contacts && @state.userProfile.username
+      for c in @state.profile.contacts
+        if c.username == @state.userProfile.username
+          isFriend = true
 
     <div className="container">
       <div className={className}>
-        <div className="messages tabContent">
-          <div className="loadPrevious">
-            {topControl}
+        {if isFriend
+          <div>
+            <div className="messages tabContent">
+              <div className="loadPrevious">
+                {topControl}
+              </div>
+              {messages}
+            </div>
+            <div className="typing">
+            </div>
+            <div className="chatInput">
+              <TextField key="chatInput" ref="chatInput" style={width:"100%"} className="input" hintText="Type your message"
+                multiLine={true} value={@state.message} onChange={@handleChange} disabled={@state.loading}/>
+              
+              <div className={sendButtonClassName}>
+                <FloatingActionButton secondary=true iconClassName="fa fa-paper-plane-o" onClick={@sendMessage}/>
+              </div>
+            </div>
           </div>
-          {messages}
-        </div>
-        <div className="typing">
-        </div>
-        <div className="chatInput">
-          <TextField key="chatInput" ref="chatInput" style={width:"100%"} className="input" hintText="Type your message"
-            multiLine={true} value={@state.message} onChange={@handleChange} />
-          
-          <div className={sendButtonClassName}>
-            <FloatingActionButton secondary=true iconClassName="fa fa-paper-plane-o" onClick={@sendMessage}/>
-          </div>
-        </div>
+        else if @state.loading
+          <FontIcon className="fa fa-spinner fa-pulse"/>
+        else if @state.userProfile
+          <AddFriend userProfile={@state.userProfile} />
+        else
+          <div> User not found </div>
+        }
       </div>
     </div>
 

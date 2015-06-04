@@ -105,14 +105,7 @@ module.exports = (io, rclient) ->
           message.fromUser = user
           message.toUser = toUser
 
-          console.log user.contacts
-          found = false
-          for contact in user.contacts
-            if contact.username == toUser.username
-              found = true
-              break
-
-          if found
+          if user.hasContact toUser.username
             console.log "User has contact"
           else
             user.contacts.push toUser.id

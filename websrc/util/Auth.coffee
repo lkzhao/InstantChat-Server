@@ -9,6 +9,7 @@ initialSocket.on "connect", ->
   console.log "socket connected"
   $.get("/user/profile/#{auth.username}?token=#{auth.token}")
     .done( (data)=>
+      console.log "load initial profile"
       auth.profile = data
       auth._onProfileChange()
     ).fail( =>
@@ -29,6 +30,7 @@ auth =
   _onProfileChange: ->
     if @callbacks.profileChange
       for cb in @callbacks.profileChange
+        console.log cb
         cb(@profile)
 
   on: (key, cb)->

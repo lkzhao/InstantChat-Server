@@ -5,27 +5,22 @@ Link = Router.Link
 
 mui = require "material-ui"
 TextField = mui.TextField
+FlatButton = mui.FlatButton
 FontIcon = mui.FontIcon
 auth = require "../util/Auth"
+RequireProfile = require "../util/requireProfile"
+
 module.exports = React.createClass
+  mixins:[RequireProfile]
   getInitialState: ->
-    contacts: []
     searchQuery: ""
-    loading: false
 
   componentDidMount: ->
-    @setState loading:true
-    $.get("/user/contacts?token=#{auth.token}")
-      .done( (data)=>
-        @setState 
-          contacts: data
-          loading: false
-      ).fail( =>
-        @setState loading:false
-      )
+    return
 
   handleChange: (e)->
     @setState searchQuery:e.target.value.toUpperCase()
+
 
   render: ->
     generateRowFn = (user)=>
@@ -42,22 +37,26 @@ module.exports = React.createClass
           displayName.push <em key={"search#{count+1}"}>{@state.searchQuery}</em>
           count = count + 2
         displayName.pop()
-      <Link to="chat" className={className} params={roomId:username}>
+      <Link key={"contact-#{username}"} to="chat" className={className} params={roomId:username}>
         <img src={user.image}/>
           {displayName}
       </Link>
 
     filterFn = (user)=>
       !@state.searchQuery || user.username.toUpperCase().indexOf(@state.searchQuery) > -1
-    matchedUsers = @state.contacts.filter filterFn
+    matchedUsers = (@state.profile.contacts || []).filter filterFn
     userViews = matchedUsers.slice(0,5).map generateRowFn
     <div className="sideBar">
       <header>
-        <TextField style={width:"100%"} className="search" floatingLabelText="Search" hintText="CS350" onChange={@handleChange}  value={@state.searchQuery} />
+        <TextField key="searchContact" style={width:"100%"} className="search" floatingLabelText="Search" hintText="CS350" onChange={@handleChange}  value={@state.searchQuery} />
       </header>
-      <Link to="app" className={if !@props.params.roomId then "selected conversation" else "conversation"}>
+      {if !@state.searchQuery then <Link to="app" className={if !@props.params.roomId then "selected conversation" else "conversation"}>
         <FontIcon className="fa fa-home"/>
         Nearby
-      </Link>
-      {userViews}
+      </Link>}
+      <div key="contacts">
+        {userViews}
+      </div>
+      <div key="people">
+      </div>
     </div>

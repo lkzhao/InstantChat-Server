@@ -78,6 +78,12 @@ UserSchema.pre('save', (next) ->
 
 
 UserSchema.methods = 
+  hasContact: (username) ->
+    for c in @contacts
+      if c.username == username
+        return true
+    false
+
   ###
    * Authenticate - check if the passwords are the same
    *
