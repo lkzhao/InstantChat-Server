@@ -103,6 +103,7 @@ auth =
       )
     ).done((data, textStatus, jqXHR) =>
       if data.success and data.token
+        @profile = {}
         @_saveTokenAndUsername data.token, username
         callback true
       else if data.error
