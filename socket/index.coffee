@@ -79,6 +79,20 @@ module.exports = (io, rclient) ->
 
         msg.remove()
 
+
+    # view message
+    socket.on "BINARY", (data, fn) ->
+      console.log data.messageId
+      Message.findOne({ _id : data.messageId })
+        .select("id binaryContent")
+        .populate('fromUser', 'username')
+        .populate('toUser', 'username')
+        .exec (err, msg)->
+          if err || !msg
+            return fn()
+          # console.log msg
+          fn msg.binaryContent
+
     # send message
     socket.on "SEND", (data, fn) ->
       if !fn

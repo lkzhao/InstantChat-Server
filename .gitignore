@@ -2,6 +2,6 @@
 .npm
 node_modules
 uploads
-public/javascript/main.js
-public/javascript/main.map
+public/javascripts/main.js
+public/javascripts/main.map
 public/stylesheets/main.css

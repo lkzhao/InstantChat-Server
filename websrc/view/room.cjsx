@@ -20,6 +20,7 @@ Tab = mui.Tab
 IconButton = mui.IconButton
 FontIcon = mui.FontIcon
 RaisedButton = mui.RaisedButton
+FlatButton = mui.FlatButton
 FloatingActionButton = mui.FloatingActionButton
 
 
@@ -27,6 +28,13 @@ Header = require "./header"
 SideBar = require "./sideBar"
 
 Message = React.createClass
+  handleClick: ->
+    message = @props.message
+    if message.type == "audio"
+      auth.socket.emit "BINARY", {messageId:message.id}, (soundBuffer) ->
+        player = AV.Player.fromBuffer(soundBuffer);
+        player.play()
+
   render: ->
     message = @props.message
     className = ""
@@ -46,9 +54,17 @@ Message = React.createClass
         className = "incoming"
         topStatus = <em>{message.username}</em>
 
-      return <Paper zDepth={1} style={style} className={className+" message"}>
+      if message.type == "audio"
+        l = message.metaData.length.toFixed(1)
+        content = "▶   #{l}s"
+
+      return <Paper style={style} className={className+" message"}>
         <div className="topStatus">{topStatus}</div>
-        <div className="bubble">{content}</div>
+        
+        {if message.type == "audio"
+          <FlatButton onClick={@handleClick} label={content}/>
+        else
+          <div className="bubble">{content}</div>}
       </Paper>
     <div className={className+" message"}>{content}</div>
 
@@ -150,7 +166,7 @@ ChatView = React.createClass
           messages: data.messages || []
           transitioning: false
           loading: false
-          nomore: data.messages.length == 0
+          nomore: data.messages.length < 20
           userProfile: data.userProfile
       ).fail( =>
         @setState loading:false
