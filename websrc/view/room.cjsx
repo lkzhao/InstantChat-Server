@@ -166,7 +166,7 @@ ChatView = React.createClass
           messages: data.messages || []
           transitioning: false
           loading: false
-          nomore: data.messages.length < 20
+          nomore: !data.messages || data.messages.length < 20
           userProfile: data.userProfile
       ).fail( =>
         @setState loading:false
@@ -185,7 +185,7 @@ ChatView = React.createClass
           messages: data.messages.concat(@state.messages)
           transitioning: false
           loading: false
-          nomore: data.messages.length == 0
+          nomore: !data.messages || data.messages.length < 20
       ).fail( =>
         @setState loading:false
       )
