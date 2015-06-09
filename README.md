@@ -19,8 +19,8 @@ npm installl
 sudo port install graphicsmagic
 ```
 
-Enviornment Viables
 ```
+// Enviornment Viables:
 JWT_SECRET
 NODE_ENV
 ```
