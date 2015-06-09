@@ -11,7 +11,8 @@
 ```
 npm install -g grunt-cli
 npm install -g coffeescript
-npm install -g browserify
+npm install -g watchify
+
 npm installl
 ```
 

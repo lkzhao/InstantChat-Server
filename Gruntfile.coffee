@@ -21,6 +21,7 @@ module.exports = (grunt) ->
         src: "websrc/view/main.cjsx"
         dest: "public/javascripts/main.js"
         options:
+          watch: true
           browserifyOptions:
             debug: true
             transform: ["coffee-reactify"]
@@ -29,11 +30,6 @@ module.exports = (grunt) ->
       less:
         files: ["websrc/less/*.less"]
         tasks: ["less"]
-        options:
-          spawn: false
-      scripts:
-        files: ["websrc/view/*.cjsx", "websrc/util/*.coffee"]
-        tasks: ["browserify"]
         options:
           spawn: false
       express:
