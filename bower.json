@@ -1,0 +1,25 @@
+{
+  "name": "InstantChat-Server",
+  "version": "0.0.1",
+  "homepage": "https://github.com/luke-z/InstantChat-Server",
+  "main": "index.html",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.0.0",
+    "iron-ajax": "PolymerElements/iron-ajax#^1.0.0",
+    "paper-drawer-panel": "PolymerElements/paper-drawer-panel#^1.0.0",
+    "paper-header-panel": "PolymerElements/paper-header-panel#^1.0.0",
+    "paper-icon-button": "PolymerElements/paper-icon-button#^1.0.0",
+    "paper-toolbar": "PolymerElements/paper-toolbar#^1.0.0",
+    "paper-item": "PolymerElements/paper-item#^1.0.0",
+    "paper-menu": "PolymerElements/paper-menu#^1.0.0",
+    "app-router": "~2.6.1"
+  }
+}

@@ -20,7 +20,7 @@ initialSocket.on "profileChange", (data) ->
   auth.profile = data
   auth._onProfileChange()
 
-auth = 
+window.auth = 
   username: username
   token: token
   socket: initialSocket

@@ -1,6 +1,6 @@
 
 React = require "react/addons"
-
+ReactCSSTransitionGroup = React.addons.CSSTransitionGroup
 
 Router = require "react-router"
 Navigation = Router.Navigation
@@ -28,12 +28,19 @@ Header = require "./header"
 SideBar = require "./sideBar"
 
 Message = React.createClass
-  handleClick: ->
-    message = @props.message
-    if message.type == "audio"
-      auth.socket.emit "BINARY", {messageId:message.id}, (soundBuffer) ->
-        player = AV.Player.fromBuffer(soundBuffer);
-        player.play()
+
+  componentWillReceiveProps: (nextProps) ->
+    if nextProps.message.viewTime and nextProps.message.metaData.expireTime
+      if @timer
+        clearInterval @timer
+      @timer = setInterval @handleTimerUpdate, 1000
+
+  handleTimerUpdate: ->
+    if (new Date() - @props.message.viewTime)/1000 > @props.message.metaData.expireTime
+      clearInterval @timer
+      @props.onDelete @props.message
+    else
+      @forceUpdate()
 
   render: ->
     message = @props.message
@@ -58,14 +65,20 @@ Message = React.createClass
         l = message.metaData.length.toFixed(1)
         content = "▶   #{l}s"
 
-      return <Paper style={style} className={className+" message"}>
+      if message.viewTime and message.metaData.expireTime
+        e = (Math.max(0, message.metaData.expireTime - (new Date() - message.viewTime)/1000)).toFixed(0)
+        bottomStatus = "#{e}s"
+
+      return <div className={className+" message"}>
         <div className="topStatus">{topStatus}</div>
-        
-        {if message.type == "audio"
-          <FlatButton onClick={@handleClick} label={content}/>
-        else
-          <div className="bubble">{content}</div>}
-      </Paper>
+        <Paper style={style}>
+          {if message.type == "audio"
+            <FlatButton onClick={@props.onClick} label={content}/>
+          else
+            <div className="bubble">{content}</div>}
+        </Paper>
+        <div className="bottomStatus">{bottomStatus}</div>
+      </div>
     <div className={className+" message"}>{content}</div>
 
 ChatView = React.createClass
@@ -89,10 +102,12 @@ ChatView = React.createClass
       message =
         sendTo: @props.params.roomId
         content: @state.message
-        date: Date.now().toString()
+        date: (new Date()).toISOString()
         type: "text"
         viewTime: null
         messageId: null
+        metaData:
+          expireTime: 20
 
       socket.emit 'SEND', message, (data) ->
         if data.messageId
@@ -114,9 +129,14 @@ ChatView = React.createClass
 
   handleNewMessage: (data) ->
     console.log data
+    if data.fromUser != @state.profile.username and data.fromUser != @props.params.roomId
+      return
     data.date = new Date(data.date)
     @setState messages: @state.messages.concat([data])
     @handleScroll()
+    if data.metaData.expireTime and data.fromUser != @state.profile.username and data.type != "audio"
+      console.log "VIEW!!"
+      socket.emit 'VIEW', {messageIds:[data.id], date:(new Date()).toISOString()}
 
   handleTyping: (data) ->
     @setState
@@ -127,13 +147,26 @@ ChatView = React.createClass
       typing: @state.typing.filter ->
         @ != data.username
 
+  handleViewMessage: (data) ->
+    console.log "VIEW", data, @state.messages
+    messages = @state.messages
+    date = new Date(data.date)
+    for message in messages
+      for messageId in data.messageIds
+        if message.id == messageId
+          message.viewTime = date
+          break
+    @setState messages:messages
+
+  handleDeleteMessage: (message) ->
+    messages = @state.messages
+    messages.splice(messages.indexOf(message),1)
+    @setState messages:messages
 
   componentWillReceiveProps: (nextProps) ->
     if nextProps.params.roomId != @props.params.roomId
-      if @timer
-        clearTimeout @timer
+      @setState messages: []
       @getInitialMessages nextProps.params.roomId
-      @setState transitioning: true
 
   componentWillUpdate: (nextProps, nextState) ->
     if @state.messages.length < nextState.messages.length
@@ -146,6 +179,7 @@ ChatView = React.createClass
   componentDidMount: ->
     $(window).on 'scroll', @handleScroll
     socket.on 'RECEIVE', @handleNewMessage
+    socket.on 'VIEW', @handleViewMessage
     socket.on 'typing', @handleTyping
     socket.on 'stop typing', @handleStopTyping
     console.log auth.username, @props.params.roomId
@@ -155,6 +189,7 @@ ChatView = React.createClass
   componentWillUnmount: ->
     $(window).off 'scroll', @handleScroll
     socket.removeListener 'RECEIVE', @handleNewMessage
+    socket.removeListener 'VIEW', @handleViewMessage
     socket.removeListener 'typing', @handleTyping
     socket.removeListener 'stop typing', @handleStopTyping
 
@@ -162,18 +197,37 @@ ChatView = React.createClass
     @setState loading:true
     $.get("/user/conversation/#{user}?token=#{auth.token}")
       .done( (data)=>
-        @setState 
-          messages: data.messages || []
+        messages = data.messages || []
+        viewTime = (new Date()).toISOString()
+        viewedMessages = []
+        for m in messages
+          m.date = new Date(m.date)
+          if m.metaData.expireTime && m.type != "audio" && m.fromUser!=@state.profile.username
+            viewedMessages.push m.id
+        @setState
+          messages: messages
           transitioning: false
           loading: false
-          nomore: !data.messages || data.messages.length < 20
+          nomore: messages.length < 20
           userProfile: data.userProfile
+        if viewedMessages.length > 0
+          socket.emit "VIEW", {messageIds: viewedMessages, date:viewTime}
       ).fail( =>
         @setState loading:false
       )
 
-  handleTabChange: (index) ->
-    @setState tab:index
+  handleClick: (message) ->
+    if message.type == "audio"
+      if message.buffer
+        player = AV.Player.fromBuffer(message.buffer)
+        player.play()
+      else
+        auth.socket.emit "BINARY", {messageId:message.id}, (soundBuffer) =>
+          message.buffer = soundBuffer
+          player = AV.Player.fromBuffer(soundBuffer);
+          player.play()
+          if message.metaData.expireTime && message.fromUser!=@state.profile.username
+            socket.emit "VIEW", {messageIds: [message.id], date:(new Date()).toISOString()}
 
   loadPrevious: ->
     before = @state.messages[0].date || Date.now()
@@ -181,18 +235,27 @@ ChatView = React.createClass
     @setState loading:true
     $.get("/user/conversation/#{@props.params.roomId}?token=#{auth.token}&before=#{before}")
       .done( (data)=>
+        messages = data.messages || []
+        viewTime = (new Date()).toISOString()
+        viewedMessages = []
+        for m in messages
+          m.date = new Date(m.date)
+          if m.metaData.expireTime && m.type != "audio" && m.fromUser!=@state.profile.username
+            viewedMessages.push m.id
         @setState 
-          messages: data.messages.concat(@state.messages)
+          messages: messages.concat(@state.messages)
           transitioning: false
           loading: false
-          nomore: !data.messages || data.messages.length < 20
+          nomore: messages.length < 20
+        if viewedMessages
+          socket.emit "VIEW", {messageIds: viewedMessages, date:viewTime}
       ).fail( =>
         @setState loading:false
       )
 
   render: ->
     messages = @state.messages.map (message) =>
-      <Message key={"message"+message.id} message={message} username={auth.username}/>
+      <Message key={"message"+message.id} message={message} username={auth.username} onDelete={@handleDeleteMessage} onClick={@handleClick.bind(this, message)} />
 
     className = "roomView"
     if @state.transitioning
@@ -203,9 +266,9 @@ ChatView = React.createClass
 
     topControl = null
     if @state.loading || !@state.profile
-      topControl = <FontIcon className="fa fa-spinner fa-pulse"/>
+      topControl = <div className="loadPrevious" key="loadPrevious"><FontIcon className="fa fa-spinner fa-pulse"/></div>
     else if !@state.nomore
-      topControl = <RaisedButton  onClick={@loadPrevious} primary={true} label="Load Previous" />
+      topControl = <div className="loadPrevious" key="loadPrevious"><RaisedButton  onClick={@loadPrevious} primary={true} label="Load Previous" /></div>
 
     isFriend = false
     if @state.profile.contacts && @state.userProfile.username
@@ -217,12 +280,10 @@ ChatView = React.createClass
       <div className={className}>
         {if isFriend
           <div>
-            <div className="messages tabContent">
-              <div className="loadPrevious">
-                {topControl}
-              </div>
+            <ReactCSSTransitionGroup key={"transitionGroup"+@props.params.roomId} className="messages tabContent" transitionName="message" component="div">
+              {topControl}
               {messages}
-            </div>
+            </ReactCSSTransitionGroup>
             <div className="typing">
             </div>
             <div className="chatInput">

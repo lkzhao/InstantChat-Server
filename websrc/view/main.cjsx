@@ -52,15 +52,15 @@ NotFound = React.createClass
   render: ->
     <h1> 404 - Not Found </h1>
 
-routes =
-  <Route name="app" path="/" handler={App}>
-    <Route name="chat" path="chat/:roomId" handler={Room}/>
-    <DefaultRoute handler={Dashboard}/>
-    <Route name="login" path="login" handler={Login}/>
-    <Route name="signup" path="signup" handler={Login}/>
-    <Route name="signupSuccess" path="signupSuccess" handler={SignupSuccess} />
-    <NotFoundRoute handler={NotFound} />
-  </Route>
+# routes =
+#   <Route name="app" path="/" handler={App}>
+#     <Route name="chat" path="chat/:roomId" handler={Room}/>
+#     <DefaultRoute handler={Dashboard}/>
+#     <Route name="login" path="login" handler={Login}/>
+#     <Route name="signup" path="signup" handler={Login}/>
+#     <Route name="signupSuccess" path="signupSuccess" handler={SignupSuccess} />
+#     <NotFoundRoute handler={NotFound} />
+#   </Route>
 
-Router.run routes, (Handler, state) ->
-  React.render <Handler {...state}/>, $("#main").get(0)
+# Router.run routes, (Handler, state) ->
+#   React.render <Handler {...state}/>, $("#main").get(0)

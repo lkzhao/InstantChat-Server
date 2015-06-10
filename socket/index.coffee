@@ -67,18 +67,19 @@ module.exports = (io, rclient) ->
 
     # view message
     socket.on "VIEW", (data) ->
-      Message.load data.messageId, (err, msg)->
-        if err || !msg
+      Message.find({_id: {$in: [data.messageIds]}})
+      .populate('fromUser', 'username')
+      .populate('toUser', 'username')
+      .exec (err, msgs)->
+        if err || !msgs || msgs.length == 0
           return
-
+        msg = msgs[0]
         for soc in manager.allSocketsForUser(msg.fromUser.username)
           soc.emit "VIEW", data
-
         for soc in manager.allSocketsForUser(msg.toUser.username)
           soc.emit "VIEW", data
-
-        msg.remove()
-
+        for m in msgs
+          m.remove()
 
     # view message
     socket.on "BINARY", (data, fn) ->

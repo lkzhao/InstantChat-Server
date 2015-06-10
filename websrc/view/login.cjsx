@@ -48,6 +48,7 @@ module.exports = React.createClass
       @transitionTo "app"
 
   handleLogin: ->
+    console.log "login"
     if @state.loading
       return
     if !@state.username

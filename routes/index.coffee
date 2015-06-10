@@ -13,6 +13,7 @@ module.exports = (app, rclient) ->
   app.use (err, req, res, next) ->
       res.status(err.status || 500)
   app.use express.static('public')
+  app.use '/bower_components', express.static('bower_components')
   app.use '/signup', require('./signup')
   app.use '/login', require('./login')
   app.use '/user', require('./user')

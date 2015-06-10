@@ -1,0 +1,48 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="bower_components/paper-ripple/paper-ripple.html">
+<link rel="import" href="contact-element.html">
+
+<dom-module id="sidebar-element">
+  <style>
+    h4{
+      /*border-top:1px solid #e0e0e0;*/
+      padding: 16px;
+      margin-top: 16px;
+      font-size: 16px;
+    }
+  </style>
+  <template>
+    <h4>Contacts</h4>
+    <iron-selector attr-for-selected="username" selected="{{username}}">
+      <template is="dom-repeat" items="{{data}}">
+        <contact-element username="{{item.username}}" image="{{item.image}}" selected="{{isSelected(item.username)}}"/>
+      </template>
+    </iron-selector>
+  </template>
+</dom-module>
+
+<script>
+  // register a new element called sidebar-element
+  Polymer({
+    is: "sidebar-element",
+    properties: {
+      username:{
+        type:String
+      },
+      data: {
+        type: Array,
+        value: function(){
+          return auth.profile.contacts
+        }
+      }
+    },
+    ready: function() {
+      console.log("Ready "+this.username)
+    },
+    isSelected: function(username){
+      return this.username === username
+    }
+  });
+</script>
