@@ -8,6 +8,8 @@
       height:34px;
       margin-right: 15px;
       border-radius: 19px;
+      background: #eee;
+      border:none;
     }
     .contact{
       height:56px;
@@ -33,10 +35,10 @@
     }
   </style>
   <template>
-    <a href="{{computeUrl(username)}}" class="contact layout horizontal center" name="[[username]]">
-      <img src="[[image]]" alt="[[username]]">
-      <span>[[username]]</span>
-      <paper-ripple />
+    <a href="{{computeUrl(contact.username)}}" class="contact layout horizontal center" name="[[contact.username]]">
+      <img src="[[contact.image]]" alt="[[contact.username]]" >
+      <span>[[contact.username]]</span>
+      <paper-ripple/>
     </a>
   </template>
 </dom-module>
@@ -45,15 +47,11 @@
   Polymer({
     is: "contact-element",
     properties: {
-      username:{
-        type:String
-      },
-      image:{
-        type:String
+      contact:{
+        type:Object
       }
     },
     ready: function() {
-      console.log("Ready "+this.username)
     },
     computeUrl: function(username){
       return "#/chat/"+username

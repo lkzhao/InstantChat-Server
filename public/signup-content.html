@@ -1,0 +1,108 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/neon-animation/neon-animation.html">
+<link rel="import" href="bower_components/paper-input/paper-input.html">
+<link rel="import" href="bower_components/paper-button/paper-button.html">
+
+
+
+<dom-module id="signup-content">
+
+  <style>
+    paper-button{
+      width:100%;
+      margin-top:20px;
+    }
+  </style>
+
+  <template>
+
+    <paper-input label="Name" id="name"></paper-input>
+    <paper-input label="Username" id="username" value="{{username}}"></paper-input>
+    <paper-input label="Email" id="email"></paper-input>
+    <paper-input label="Password" id="password" value="{{password}}"></paper-input>
+    <paper-button id="btn">Sign Up</paper-button>
+
+  </template>
+
+</dom-module>
+
+<script>
+
+  Polymer({
+
+    is: 'signup-content',
+
+    behaviors: [
+      Polymer.NeonSharedElementAnimatableBehavior
+    ],
+
+    properties: {
+      username:{
+        type:String,
+        notify: true
+      },
+      password:{
+        type:String,
+        notify: true
+      },
+      sharedElements: {
+        type: Object,
+        value: function() {
+          return {
+            'btn': this.$.btn,
+            'username': this.$.username,
+            'password': this.$.password
+          }
+        }
+      },
+
+      animationConfig: {
+        type: Object,
+        value: function() {
+          return {
+            'entry': [{
+              name: 'hero-animation',
+              id: 'btn',
+              toPage: this
+            },{
+              name: 'hero-animation',
+              id: 'username',
+              toPage: this
+            },{
+              name: 'hero-animation',
+              id: 'password',
+              toPage: this
+            },{
+              name: 'fade-in-animation',
+              node: this.$.email
+            }, {
+              name: 'fade-in-animation',
+              node: this.$.name
+            }],
+            'exit': [{
+              name: 'hero-animation',
+              id: 'btn',
+              fromPage: this
+            },{
+              name: 'hero-animation',
+              id: 'username',
+              fromPage: this
+            },{
+              name: 'hero-animation',
+              id: 'password',
+              fromPage: this
+            },{
+              name: 'fade-out-animation',
+              node: this.$.email
+            }, {
+              name: 'fade-out-animation',
+              node: this.$.name
+            }]
+          }
+        }
+      }
+    }
+  });
+
+</script>
+

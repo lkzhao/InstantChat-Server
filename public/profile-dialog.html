@@ -1,0 +1,171 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/neon-animation/neon-animation.html">
+<link rel="import" href="bower_components/paper-input/paper-input.html">
+<link rel="import" href="bower_components/paper-button/paper-button.html">
+<link rel="import" href="bower_components/paper-material/paper-material.html">
+
+
+<dom-module id="profile-dialog">
+  <style>
+    paper-button{
+      width:100%;
+      margin-top:20px;
+    }
+    paper-material{
+      width: 700px;
+      margin: 50px auto;
+      z-index: 1000;
+      background: white;
+      position: relative;
+    }
+    #background{
+      position: fixed;
+      top:0;
+      left:0;
+      right:0;
+      bottom: 0;
+      background: #eeeeee;
+    }
+    #container{
+      width: 700px;
+      margin-left: -350px;
+      left: 50%;
+      top:50px;
+      z-index: 1001;
+      position: absolute;
+    }
+    #image{
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 200px;
+      height: 200px;
+      border-radius: 0px;
+    }
+    header{
+      height:200px;
+      background: #1abc9c;
+    }
+    .content{
+      padding: 16px;
+    }
+    #username{
+      position: absolute;
+      left: 216px;
+      top: 160px;
+      width: 100px;
+      height: 100px;
+      font-size: 24px;
+      color:white;
+    }
+    .buttons{
+      margin-right: 8px;
+      margin-bottom: 8px;
+      padding: 0;
+    }
+    paper-button{
+      width: 150px;
+    }
+  </style>
+
+  <template>
+    <div>
+      <paper-material elevation="1" id="dialog" class="vertical layout wrap">
+        <header >
+          <h2 id="username">{{profile.username}}</h2>
+        </header>
+        <div class="content">
+          Menu...
+        </div>
+        <div class="buttons horizontal layout end-justified">
+          <paper-button on-click="close">Cancel</paper-button>
+          <paper-button on-click="logout">Logout</paper-button>
+        </div>
+      </paper-material>
+      <div id="container">
+        <img id="image" src="{{profile.image}}"/>
+      </div>
+      <div id="background" />
+    </div>
+  </template>
+
+</dom-module>
+
+<script>
+
+  Polymer({
+    is: 'profile-dialog',
+
+    behaviors: [
+      Polymer.NeonSharedElementAnimatableBehavior
+    ],
+    logout: function(){
+      auth.logout()
+      document.querySelector('app-router').go('/login')
+      close()
+    },
+    close: function(){
+      this.fire('close');
+    },
+    properties: {
+      username:{
+        type:String,
+        notify: true
+      },
+      password:{
+        type:String,
+        notify: true
+      },
+      sharedElements: {
+        type: Object,
+        value: function() {
+          return {
+            'image': this.$.image,
+            'background': this.$.background
+          }
+        }
+      },
+      animationConfig: {
+        type: Object,
+        value: function() {
+          return {
+            'entry': [{
+              name: 'ripple-animation',
+              id: 'background',
+              toPage: this
+            },{
+              name: 'hero-animation',
+              id: 'image',
+              toPage: this,
+              timing: {
+                delay: 150
+              }
+            },{
+              name: 'fade-in-animation',
+              node: this.$.dialog,
+              timing: {
+                delay: 400
+              }
+            }],
+            'exit': [{
+              name: 'transform-animation',
+              transformFrom: 'none',
+              transformTo: 'translate(0px,-200vh) scale(0.9,1)',
+              node: this.$.dialog
+            },{
+              name: 'transform-animation',
+              transformFrom: 'none',
+              transformTo: 'translate(0px,-200vh) scale(0.9,1)',
+              node: this.$.container
+            },{
+              name: 'fade-out-animation',
+              node: this.$.background
+            }]
+          }
+        }
+      }
+    }
+  });
+
+</script>
+

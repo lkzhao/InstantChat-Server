@@ -1,0 +1,383 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="bower_components/paper-header-panel/paper-header-panel.html">
+<link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="bower_components/paper-toolbar/paper-toolbar.html">
+
+<link rel="import" href="bower_components/neon-animation/neon-animation.html">
+<link rel="import" href="bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="bower_components/paper-ripple/paper-ripple.html">
+<link rel="import" href="contact-element.html">
+<link rel="import" href="message-bubble.html">
+
+<dom-module id="chat-content">
+  <style>
+    h4{
+      /*border-top:1px solid #e0e0e0;*/
+      padding: 16px;
+      margin-top: 16px;
+      font-size: 16px;
+    }
+    paper-drawer-panel { 
+      --paper-drawer-panel-main-container: { 
+        background-color:#f5f5f5;
+      };
+      position:fixed !important;
+    }
+    .sidebar .content{
+      border-right:1px solid #e0e0e0;
+    }
+    .sidebar .paper-header{
+      height:256px;
+      position: relative;
+    }
+    .sidebar .paper-header img{
+      position: absolute;
+      top:0;
+      bottom: 0;
+      right:0;
+      left: 0;
+      width: 100%;
+      height:100%;
+      overflow: hidden;
+    }
+    .sidebar .paper-header .title{
+      position:absolute;
+      left:16px;
+      bottom:8px;
+      font-weight: 700;
+      width: 100%;
+      z-index: 200;
+      font-size: 14px;
+      line-height: 20px;
+      color:white;
+    }
+    .main paper-toolbar{
+      --paper-toolbar-background: #1abc9c;
+    }
+    .main .content{
+    }
+    .main .profileImage{
+      width: 34px;
+      height: 34px;
+      margin-right: 16px;
+      border-radius: 19px;
+    }
+  </style>
+
+  <template>
+    <paper-drawer-panel id="page">
+      <paper-header-panel drawer mode="waterfall-tall" class="sidebar">
+        <div class="paper-header" on-click="handleProfileClick">
+          <img src="{{profile.image}}" id="image"/>
+          <div title class="bottom title" id="username">{{profile.username}}</div>
+        </div>
+        <div class="content fit">
+          <h4>Contacts</h4>
+          <iron-selector attr-for-selected="name" selected="{{username}}">
+            <template is="dom-repeat" items="{{contacts}}">
+              <contact-element name="{{item.username}}" contact="{{item}}" on-profile-open="handleContactClick"/>
+            </template>
+          </iron-selector>
+        </div>
+      </paper-header-panel>
+      <paper-header-panel main mode="waterfall-tall"  class="main">
+        <paper-toolbar>
+          <paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
+          <img class="profileImage" src="{{otheruser.image}}" user="{{otheruser}}" on-click="handleContactClick"/>
+          <div>{{otheruser.username}}</div>
+        </paper-toolbar>
+        <div class="content">
+          <template is="dom-repeat" items="{{messages}}">
+            <message-bubble message="[[item]]"></message-bubble>
+          </template>
+        </div>
+      </paper-header-panel>
+    </paper-drawer-panel>
+  </template>
+
+</dom-module>
+
+<script>
+  socket = auth.socket
+  Polymer({
+
+    is: 'chat-content',
+
+    behaviors: [
+      Polymer.NeonSharedElementAnimatableBehavior
+    ],
+
+    handleContactClick:function(e){
+      console.log(e.target)
+      this.sharedElements = {
+        'background': e.target,
+        'image': e.target
+      }
+      this.fire('profile-open', e.target.user);
+    },
+
+    handleProfileClick:function(){
+      this.sharedElements = {
+        'background': this.$.image,
+        'image': this.$.image
+      }
+      this.fire('profile-open', auth.profile);
+    },
+
+    properties: {
+      username:{
+        type:String,
+        observer: 'usernameChanged'
+      },
+      contacts: {
+        type: Array,
+        value: function(){
+          return auth.profile.contacts
+        }
+      },
+      otheruser: {
+        type: Object,
+        value: {}
+      },
+      profile:{
+        type: Object,
+        value: function(){
+          return auth.profile
+        }
+      },
+      animationConfig: {
+        type: Object,
+        value: function() {
+          return {
+            'entry': [],
+            'exit': [{
+              name: 'hero-animation',
+              id: 'image',
+              fromPage: this
+            },{
+              name: 'ripple-animation',
+              id: 'background',
+              fromPage: this
+            }]
+          }
+        }
+      }
+    },
+    usernameChanged:function(){
+      var rtn = {}
+      var username = this.username
+      auth.profile.contacts.forEach(function(c,i){
+        if (c.username==username){
+          rtn=c
+        }
+      })
+      this.setState({
+        'otheruser':rtn,
+        'messages':[]
+      })
+      this.getInitialMessages(username);
+    },
+    sendMessage: function() {
+      var message;
+      if (this.message) {
+        message = {
+          sendTo: this.username,
+          content: this.message,
+          date: (new Date()).toISOString(),
+          type: "text",
+          viewTime: null,
+          messageId: null,
+          metaData: {
+            expireTime: 20
+          }
+        };
+        socket.emit('SEND', message, function(data) {
+          if (data.messageId) {
+            console.log("Success");
+          }
+        });
+        this.set('message', "");
+      }
+    },
+    handleEnterRoom: function(data) {
+      var message;
+      message = {
+        announcement: "Welcome to Socket.IO Chat – " + data.room
+      };
+      this.set('messages', this.messages.concat([message]))
+    },
+    handleNewMessage: function(data) {
+      if (data.fromUser !== this.profile.username && data.fromUser !== this.username) {
+        return;
+      }
+      data.date = new Date(data.date);
+      this.set('messages', this.messages.concat([data]))
+      this.handleScroll();
+      if (data.metaData.expireTime && data.fromUser !== this.profile.username && data.type !== "audio") {
+        socket.emit('VIEW', {
+          messageIds: [data.id],
+          date: (new Date()).toISOString()
+        });
+      }
+    },
+    handleTyping: function(data) {
+      this.set('typing',this.typing.concat([data.username]));
+    },
+    handleStopTyping: function(data) {
+      this.set('typing', this.typing.filter(function() {
+        return this !== data.username;
+      }))
+    },
+    handleViewMessage: function(data) {
+      var date, i, j, len, len1, message, messageId, messages, ref;
+      console.log("VIEW", data, this.messages);
+      messages = this.messages;
+      date = new Date(data.date);
+      for (i = 0, len = messages.length; i < len; i++) {
+        message = messages[i];
+        ref = data.messageIds;
+        for (j = 0, len1 = ref.length; j < len1; j++) {
+          messageId = ref[j];
+          if (message.id === messageId) {
+            message.viewTime = date;
+            break;
+          }
+        }
+      }
+      this.set('messages', messages)
+    },
+    handleDeleteMessage: function(message) {
+      var messages;
+      messages = this.messages;
+      messages.splice(messages.indexOf(message), 1);
+      this.set('messages', messages)
+    },
+    ready: function() {
+      $(window).on('scroll', this.handleScroll);
+      socket.on('RECEIVE', this.handleNewMessage);
+      socket.on('VIEW', this.handleViewMessage);
+      socket.on('typing', this.handleTyping);
+      socket.on('stop typing', this.handleStopTyping);
+      console.log(auth.username, this.username);
+      this.getInitialMessages(this.username);
+    },
+    detached: function() {
+      $(window).off('scroll', this.handleScroll);
+      socket.removeListener('RECEIVE', this.handleNewMessage);
+      socket.removeListener('VIEW', this.handleViewMessage);
+      socket.removeListener('typing', this.handleTyping);
+      return socket.removeListener('stop typing', this.handleStopTyping);
+    },
+    setState: function(obj){
+      for(key in obj){
+        this.set(key, obj[key])
+      }
+    },
+    getInitialMessages: function(user) {
+      this.set('loading', true)
+      return $.get("/user/conversation/" + user + "?token=" + auth.token).done((function(_this) {
+        return function(data) {
+          var i, len, m, messages, viewTime, viewedMessages;
+          messages = data.messages || [];
+          viewTime = (new Date()).toISOString();
+          viewedMessages = [];
+          for (i = 0, len = messages.length; i < len; i++) {
+            m = messages[i];
+            m.date = new Date(m.date);
+            if (m.metaData.expireTime && m.type !== "audio" && m.fromUser !== _this.profile.username) {
+              viewedMessages.push(m.id);
+            }
+          }
+          _this.setState({
+            messages: messages,
+            transitioning: false,
+            loading: false,
+            nomore: messages.length < 20,
+            otheruser: data.userProfile
+          });
+          if (viewedMessages.length > 0) {
+            return socket.emit("VIEW", {
+              messageIds: viewedMessages,
+              date: viewTime
+            });
+          }
+        };
+      })(this)).fail((function(_this) {
+        return function() {
+          return _this.setState({
+            loading: false
+          });
+        };
+      })(this));
+    },
+    handleClick: function(message) {
+      var player;
+      if (message.type === "audio") {
+        if (message.buffer) {
+          player = AV.Player.fromBuffer(message.buffer);
+          return player.play();
+        } else {
+          return auth.socket.emit("BINARY", {
+            messageId: message.id
+          }, (function(_this) {
+            return function(soundBuffer) {
+              message.buffer = soundBuffer;
+              player = AV.Player.fromBuffer(soundBuffer);
+              player.play();
+              if (message.metaData.expireTime && message.fromUser !== _this.profile.username) {
+                return socket.emit("VIEW", {
+                  messageIds: [message.id],
+                  date: (new Date()).toISOString()
+                });
+              }
+            };
+          })(this));
+        }
+      }
+    },
+    loadPrevious: function() {
+      var before;
+      before = this.messages[0].date || Date.now();
+      before = before.toString();
+      this.setState({
+        loading: true
+      });
+      return $.get("/user/conversation/" + this.username + "?token=" + auth.token + "&before=" + before).done((function(_this) {
+        return function(data) {
+          var i, len, m, messages, viewTime, viewedMessages;
+          messages = data.messages || [];
+          viewTime = (new Date()).toISOString();
+          viewedMessages = [];
+          for (i = 0, len = messages.length; i < len; i++) {
+            m = messages[i];
+            m.date = new Date(m.date);
+            if (m.metaData.expireTime && m.type !== "audio" && m.fromUser !== _this.profile.username) {
+              viewedMessages.push(m.id);
+            }
+          }
+          _this.setState({
+            messages: messages.concat(_this.messages),
+            transitioning: false,
+            loading: false,
+            nomore: messages.length < 20
+          });
+          if (viewedMessages) {
+            return socket.emit("VIEW", {
+              messageIds: viewedMessages,
+              date: viewTime
+            });
+          }
+        };
+      })(this)).fail((function(_this) {
+        return function() {
+          return _this.setState({
+            loading: false
+          });
+        };
+      })(this));
+    }
+  });
+
+</script>
+

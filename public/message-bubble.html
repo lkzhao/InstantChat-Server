@@ -1,0 +1,39 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+
+<dom-module id="message-bubble">
+  <style>
+    .message{
+      background: white;
+      padding: 16px;
+      margin:16px;
+      border-radius: 4px;
+    }
+  </style>
+  <template>
+    <div class$="{{computeClass(message)}}">
+      <div>{{message.content}}</div>
+    </div>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is: "message-bubble",
+
+    properties: {
+      message:{
+        type:Object
+      }
+    },
+
+    computeClass:function(message){
+      var classes = "message"
+      if(message.fromUser){
+        classes += " outgoing"
+      }else{
+        classes += " incoming"
+      }
+      return classes
+    }
+  });
+</script>

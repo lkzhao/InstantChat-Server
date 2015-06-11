@@ -15,7 +15,7 @@
   <app-router>
     <app-route path="/" import="chat-page.html"></app-route>
     <app-route path="/chat/:username" import="chat-page.html" onUrlChange="updateModel"></app-route>
-    <app-route path="/login" import="login-page.html"></app-route>
+    <app-route path="/:page" import="login-page.html" onUrlChange="updateModel"></app-route>
   </app-router>
   <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
