@@ -7,6 +7,9 @@
 <link rel="import" href="bower_components/neon-animation/neon-animation.html">
 <link rel="import" href="bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="bower_components/paper-ripple/paper-ripple.html">
+<link rel="import" href="bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="bower_components/paper-button/paper-button.html">
+<link rel="import" href="bower_components/paper-fab/paper-fab.html">
 <link rel="import" href="contact-element.html">
 <link rel="import" href="message-bubble.html">
 
@@ -43,12 +46,14 @@
     }
     .sidebar .paper-header .title{
       position:absolute;
-      left:16px;
-      bottom:8px;
+      left:0;
+      bottom:0;
+      padding: 50px 16px 16px;
+      background: linear-gradient( to top, rgba(0,0,0,0.8), rgba(0,0,0,0));
       font-weight: 700;
       width: 100%;
       z-index: 200;
-      font-size: 14px;
+      font-size: 18px;
       line-height: 20px;
       color:white;
     }
@@ -56,12 +61,28 @@
       --paper-toolbar-background: #1abc9c;
     }
     .main .content{
+      padding-bottom: 100px;
     }
     .main .profileImage{
       width: 34px;
       height: 34px;
       margin-right: 16px;
       border-radius: 19px;
+    }
+    .inputbar{
+      position: fixed;
+      bottom: 0;
+      left:256px;
+      right:0;
+      padding: 0 16px 8px;
+      background: white;
+      border-top:1px solid #e0e0e0;
+    }
+    .inputbar paper-button{
+      margin: 0 6px 6px;
+    }
+    .loadPrevious{
+      margin: 16px 0 0;
     }
   </style>
 
@@ -81,16 +102,25 @@
           </iron-selector>
         </div>
       </paper-header-panel>
-      <paper-header-panel main mode="waterfall-tall"  class="main">
+      <paper-header-panel main mode="waterfall" class="main" id="main">
         <paper-toolbar>
           <paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
-          <img class="profileImage" src="{{otheruser.image}}" user="{{otheruser}}" on-click="handleContactClick"/>
+          <img class="profileImage" src$="{{otheruser.image}}" user="{{otheruser}}" on-click="handleContactClick"/>
           <div>{{otheruser.username}}</div>
         </paper-toolbar>
-        <div class="content">
-          <template is="dom-repeat" items="{{messages}}">
-            <message-bubble message="[[item]]"></message-bubble>
+        <div class="content" id="maincontent">
+          <template is="dom-if" if="{{!nomore}}" >
+            <div class="horizontal layout center-justified loadPrevious">
+              <paper-button on-click="loadPrevious">Load Previous</paper-button>
+            </div>
           </template>
+          <template is="dom-repeat" items="{{messages}}">
+            <message-bubble message="[[item]]" current="[[profile.username]]" user="{{getFromUser(item)}}" on-image-click="handleMessageClick"></message-bubble>
+          </template>
+        </div>
+        <div class="inputbar horizontal layout end">
+          <paper-textarea placeholder="Your message..." class="flex" id="message" value="{{message}}"></paper-textarea>
+          <paper-button on-click="sendMessage">Send</paper-button>
         </div>
       </paper-header-panel>
     </paper-drawer-panel>
@@ -105,11 +135,23 @@
     is: 'chat-content',
 
     behaviors: [
-      Polymer.NeonSharedElementAnimatableBehavior
+      Polymer.NeonSharedElementAnimatableBehavior,
+      Polymer.NeonAnimationRunnerBehavior
     ],
-
+    getFromUser:function(message){
+      if (message.fromUser==this.profile.username){
+        return this.profile
+      }
+      return this.contactWithUsername(message.fromUser)
+    },
+    handleMessageClick:function(e){
+      this.sharedElements = {
+        'background': e.detail.target,
+        'image': e.detail.target
+      }
+      this.fire('profile-open', e.target.user);
+    },
     handleContactClick:function(e){
-      console.log(e.target)
       this.sharedElements = {
         'background': e.target,
         'image': e.target
@@ -148,9 +190,22 @@
       },
       animationConfig: {
         type: Object,
-        value: function() {
+        value: function(){
           return {
-            'entry': [],
+            'transitionout': [{
+              name: 'cascaded-animation',
+              animation: 'slide-up-animation'
+            },{
+              name: 'fade-out-animation',
+              node: this.$.maincontent
+            }],
+            'transitionin': [{
+              name: 'cascaded-animation',
+              animation: 'slide-down-animation'
+            },{
+              name: 'fade-in-animation',
+              node: this.$.maincontent
+            }],
             'exit': [{
               name: 'hero-animation',
               id: 'image',
@@ -162,21 +217,68 @@
             }]
           }
         }
+      },
+      messages:{
+        type:Array,
+        observer: 'messagesChanged'
       }
     },
-    usernameChanged:function(){
-      var rtn = {}
-      var username = this.username
+    listeners: {
+      'neon-animation-finish': '_onNeonAnimationFinish'
+    },
+    _onNeonAnimationFinish: function() {
+      if (this.transitioning){
+        this.transitioning = false
+        var c = this.contactWithUsername(this.username)
+        this.setState({
+          'otheruser':c,
+          'messages':[]
+        })
+        var that = this
+        this.$.maincontent.style.display="none"
+        this.getInitialMessages(this.username, function(){
+          setTimeout(function(){
+            var messageNodes = Polymer.dom(that.root).querySelectorAll('message-bubble')
+            var nodes = []
+            messageNodes.forEach(function(n){
+              nodes.push(Polymer.dom(n.root).querySelector(".message"))
+            })
+            that.animationConfig['transitionin'][0].nodes = nodes
+            that.playAnimation('transitionin')
+            that.$.maincontent.style.display="block"
+          }, 10)
+        });
+      }
+    },
+    contactWithUsername:function(username){
+      var rtn = null
       auth.profile.contacts.forEach(function(c,i){
         if (c.username==username){
           rtn=c
         }
       })
-      this.setState({
-        'otheruser':rtn,
-        'messages':[]
+      return rtn
+    },
+    messagesChanged:function(){
+      var that = this
+      setTimeout(function(){
+        that.$.main.scroller.scrollTop = that.$.maincontent.clientHeight;
+      },10)
+    },
+    usernameChanged:function(){
+      if (!this.loaded){
+        this.loaded=true
+        this.getInitialMessages(this.username);
+        return
+      }
+      this.transitioning = true
+      var nodes = []
+      var messageNodes = Polymer.dom(this.root).querySelectorAll('message-bubble')
+      messageNodes.forEach(function(n){
+        nodes.push(Polymer.dom(n.root).querySelector(".message"))
       })
-      this.getInitialMessages(username);
+      this.animationConfig['transitionout'][0].nodes = nodes
+      this.playAnimation('transitionout')
     },
     sendMessage: function() {
       var message;
@@ -188,9 +290,9 @@
           type: "text",
           viewTime: null,
           messageId: null,
-          metaData: {
-            expireTime: 20
-          }
+          // metaData: {
+          //   expireTime: 20
+          // }
         };
         socket.emit('SEND', message, function(data) {
           if (data.messageId) {
@@ -213,7 +315,6 @@
       }
       data.date = new Date(data.date);
       this.set('messages', this.messages.concat([data]))
-      this.handleScroll();
       if (data.metaData.expireTime && data.fromUser !== this.profile.username && data.type !== "audio") {
         socket.emit('VIEW', {
           messageIds: [data.id],
@@ -254,16 +355,12 @@
       this.set('messages', messages)
     },
     ready: function() {
-      $(window).on('scroll', this.handleScroll);
-      socket.on('RECEIVE', this.handleNewMessage);
-      socket.on('VIEW', this.handleViewMessage);
-      socket.on('typing', this.handleTyping);
-      socket.on('stop typing', this.handleStopTyping);
-      console.log(auth.username, this.username);
-      this.getInitialMessages(this.username);
+      socket.on('RECEIVE', this.handleNewMessage.bind(this));
+      socket.on('VIEW', this.handleViewMessage.bind(this));
+      socket.on('typing', this.handleTyping.bind(this));
+      socket.on('stop typing', this.handleStopTyping.bind(this));
     },
     detached: function() {
-      $(window).off('scroll', this.handleScroll);
       socket.removeListener('RECEIVE', this.handleNewMessage);
       socket.removeListener('VIEW', this.handleViewMessage);
       socket.removeListener('typing', this.handleTyping);
@@ -274,42 +371,45 @@
         this.set(key, obj[key])
       }
     },
-    getInitialMessages: function(user) {
+    getInitialMessages: function(user, callback) {
       this.set('loading', true)
-      return $.get("/user/conversation/" + user + "?token=" + auth.token).done((function(_this) {
-        return function(data) {
-          var i, len, m, messages, viewTime, viewedMessages;
-          messages = data.messages || [];
-          viewTime = (new Date()).toISOString();
-          viewedMessages = [];
-          for (i = 0, len = messages.length; i < len; i++) {
-            m = messages[i];
-            m.date = new Date(m.date);
-            if (m.metaData.expireTime && m.type !== "audio" && m.fromUser !== _this.profile.username) {
-              viewedMessages.push(m.id);
-            }
+      var _this = this
+      $.get("/user/conversation/" + user + "?token=" + auth.token).done(function(data) {
+        var i, len, m, messages, viewTime, viewedMessages;
+        messages = data.messages || [];
+        viewTime = (new Date()).toISOString();
+        viewedMessages = [];
+        for (i = 0, len = messages.length; i < len; i++) {
+          m = messages[i];
+          m.date = new Date(m.date);
+          if (m.metaData.expireTime && m.type !== "audio" && m.fromUser !== _this.profile.username) {
+            viewedMessages.push(m.id);
           }
-          _this.setState({
-            messages: messages,
-            transitioning: false,
-            loading: false,
-            nomore: messages.length < 20,
-            otheruser: data.userProfile
+        }
+        _this.setState({
+          messages: messages,
+          transitioning: false,
+          loading: false,
+          nomore: messages.length < 20,
+          otheruser: data.userProfile
+        });
+        if (callback){
+          callback(true)
+        }
+        if (viewedMessages.length > 0) {
+          return socket.emit("VIEW", {
+            messageIds: viewedMessages,
+            date: viewTime
           });
-          if (viewedMessages.length > 0) {
-            return socket.emit("VIEW", {
-              messageIds: viewedMessages,
-              date: viewTime
-            });
-          }
-        };
-      })(this)).fail((function(_this) {
-        return function() {
-          return _this.setState({
-            loading: false
-          });
-        };
-      })(this));
+        }
+      }).fail(function() {
+        _this.setState({
+          loading: false
+        });
+        if (callback){
+          callback(false)
+        }
+      });
     },
     handleClick: function(message) {
       var player;

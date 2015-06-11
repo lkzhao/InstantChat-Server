@@ -3,15 +3,44 @@
 <dom-module id="message-bubble">
   <style>
     .message{
+      padding:16px 8px 0;
+    }
+    .message .bubble{
       background: white;
       padding: 16px;
-      margin:16px;
       border-radius: 4px;
+      max-width: 80%;
+    }
+    .outgoing .bubble{
+      background:  #1abc9c;
+      color:white;
+    }
+    .profileImage{
+      width: 34px;
+      height: 34px;
+      margin: 7px 8px;
+      border-radius: 19px;
+    }
+    .outgoing .profileImage{
+      float:right;
     }
   </style>
   <template>
     <div class$="{{computeClass(message)}}">
-      <div>{{message.content}}</div>
+      <template is="dom-if" if="{{isIncoming(message)}}">
+        <img class="profileImage" src="{{user.image}}" on-click="handleContactClick"/>
+      </template>
+      <template is="dom-if" if="{{isText(message)}}">
+        <div class="bubble">{{message.content}}</div>
+      </template>
+      <template is="dom-if" if="{{isAudio(message)}}">
+        <div class="bubble" on-click="handleAudioPlayback">
+          <span>{{audioLength(message)}}</span>
+        </div>
+      </template>
+      <template is="dom-if" if="{{isOutgoing(message)}}">
+        <img class="profileImage" src="{{user.image}}" on-click="handleContactClick"/>
+      </template>
     </div>
   </template>
 </dom-module>
@@ -23,17 +52,62 @@
     properties: {
       message:{
         type:Object
+      },
+      current:{
+        type:String
       }
+    },
+    handleAudioPlayback:function(e){
+      var player;
+      var message = this.message
+      if (message.buffer) {
+        player = AV.Player.fromBuffer(message.buffer);
+        return player.play();
+      } else {
+        return auth.socket.emit("BINARY", {
+          messageId: message.id
+        }, (function(_this) {
+          return function(soundBuffer) {
+            message.buffer = soundBuffer;
+            player = AV.Player.fromBuffer(soundBuffer);
+            player.play();
+            if (message.metaData.expireTime && message.fromUser !== _this.state.profile.username) {
+              return socket.emit("VIEW", {
+                messageIds: [message.id],
+                date: (new Date()).toISOString()
+              });
+            }
+          };
+        })(this));
+      }
+    },
+    handleContactClick:function(e){
+      this.fire('image-click', {target:e.target});
     },
 
     computeClass:function(message){
-      var classes = "message"
-      if(message.fromUser){
-        classes += " outgoing"
+      var classes = "message horizontal layout"
+      if(message.fromUser == auth.profile.username){
+        classes += " outgoing end-justified"
       }else{
         classes += " incoming"
       }
       return classes
+    },
+    isOutgoing:function(message){
+      return message.fromUser == auth.profile.username
+    },
+    isIncoming:function(message){
+      return !this.isOutgoing(message) && message.type != "announcement"
+    },
+    isText:function(message){
+      return message.type == "text"
+    },
+    isAudio:function(message){
+      return message.type == "audio"
+    },
+    audioLength:function(message){
+      return "▶   "+message.metaData.length.toFixed(1)+"s"
     }
   });
 </script>
