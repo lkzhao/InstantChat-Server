@@ -14,6 +14,7 @@
 
 <link rel="import" href="contact-element.html">
 <link rel="import" href="message-bubble.html">
+<link rel="import" href="app-theme.html">
 
 <dom-module id="chat-content">
   <style>
@@ -60,7 +61,6 @@
       color:white;
     }
     .main paper-toolbar{
-      --paper-toolbar-background: #1abc9c;
     }
     .main .content{
       padding-bottom: 100px;
@@ -414,14 +414,10 @@
     ready: function() {
       socket.on('RECEIVE', this.handleNewMessage.bind(this));
       socket.on('VIEW', this.handleViewMessage.bind(this));
-      socket.on('typing', this.handleTyping.bind(this));
-      socket.on('stop typing', this.handleStopTyping.bind(this));
     },
     detached: function() {
       socket.removeListener('RECEIVE', this.handleNewMessage);
       socket.removeListener('VIEW', this.handleViewMessage);
-      socket.removeListener('typing', this.handleTyping);
-      return socket.removeListener('stop typing', this.handleStopTyping);
     },
     setState: function(obj){
       for(key in obj){
