@@ -10,6 +10,8 @@
 <link rel="import" href="bower_components/paper-input/paper-textarea.html">
 <link rel="import" href="bower_components/paper-button/paper-button.html">
 <link rel="import" href="bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="bower_components/iron-icon/iron-icon.html">
+
 <link rel="import" href="contact-element.html">
 <link rel="import" href="message-bubble.html">
 
@@ -77,12 +79,31 @@
       padding: 0 16px 8px;
       background: white;
       border-top:1px solid #e0e0e0;
+      transition: left .5s ease-out;
+    }
+    @media screen and (max-width: 640px) {
+      .inputbar {
+        left:0;
+      }
     }
     .inputbar paper-button{
-      margin: 0 6px 6px;
+      margin:0;
+      margin-left: 6px;
+      color:#1abc9c;
+      height:34px;
+    }
+    .inputbar iron-icon{
+      font-size: 12px;
     }
     .loadPrevious{
       margin: 16px 0 0;
+    }
+    paper-textarea{
+      font-size: 20px;
+      margin-top:-12px;
+      margin-bottom: -6px;
+      --paper-input-container-color:#ccc;
+      --paper-input-container-focus-color:#1abc9c;
     }
   </style>
 
@@ -115,12 +136,14 @@
             </div>
           </template>
           <template is="dom-repeat" items="{{messages}}">
-            <message-bubble message="[[item]]" current="[[profile.username]]" user="{{getFromUser(item)}}" on-image-click="handleMessageClick"></message-bubble>
+            <message-bubble message="[[item]]" current="[[profile.username]]" user="{{getFromUser(item)}}" on-image-click="handleMessageClick" on-expired="handleExpiredMessage"></message-bubble>
           </template>
         </div>
         <div class="inputbar horizontal layout end">
           <paper-textarea placeholder="Your message..." class="flex" id="message" value="{{message}}"></paper-textarea>
-          <paper-button on-click="sendMessage">Send</paper-button>
+          <paper-button on-click="sendMessage">
+            Send
+          </paper-button>
         </div>
       </paper-header-panel>
     </paper-drawer-panel>
@@ -129,6 +152,16 @@
 </dom-module>
 
 <script>
+  function isInViewport(element) {
+    var rect = element.getBoundingClientRect();
+    var html = document.documentElement;
+    return (
+      rect.top >= 0 &&
+      rect.left >= 0 &&
+      rect.bottom <= (window.innerHeight || html.clientHeight) &&
+      rect.right <= (window.innerWidth || html.clientWidth)
+    );
+  }
   socket = auth.socket
   Polymer({
 
@@ -167,6 +200,11 @@
       this.fire('profile-open', auth.profile);
     },
 
+    handleExpiredMessage:function(e){
+      var message = e.detail
+      this.handleDeleteMessage(message)
+    },
+
     properties: {
       username:{
         type:String,
@@ -194,17 +232,23 @@
           return {
             'transitionout': [{
               name: 'cascaded-animation',
-              animation: 'slide-up-animation'
+              animation: 'slide-left-animation'
             },{
               name: 'fade-out-animation',
-              node: this.$.maincontent
+              node: this.$.maincontent,
+              timing: {
+                delay: 150
+              }
             }],
             'transitionin': [{
               name: 'cascaded-animation',
-              animation: 'slide-down-animation'
+              animation: 'slide-from-left-animation'
             },{
               name: 'fade-in-animation',
-              node: this.$.maincontent
+              node: this.$.maincontent,
+              timing: {
+                delay: 150
+              }
             }],
             'exit': [{
               name: 'hero-animation',
@@ -237,16 +281,19 @@
         var that = this
         this.$.maincontent.style.display="none"
         this.getInitialMessages(this.username, function(){
-          setTimeout(function(){
+          that.async(function(){
             var messageNodes = Polymer.dom(that.root).querySelectorAll('message-bubble')
             var nodes = []
             messageNodes.forEach(function(n){
-              nodes.push(Polymer.dom(n.root).querySelector(".message"))
+              var node = Polymer.dom(n.root).querySelector(".message")
+              if (isInViewport(node)){
+                nodes.push(node)
+              }
             })
             that.animationConfig['transitionin'][0].nodes = nodes
             that.playAnimation('transitionin')
             that.$.maincontent.style.display="block"
-          }, 10)
+          })
         });
       }
     },
@@ -262,8 +309,13 @@
     messagesChanged:function(){
       var that = this
       setTimeout(function(){
-        that.$.main.scroller.scrollTop = that.$.maincontent.clientHeight;
-      },10)
+        if (that.previousHeight){
+          that.$.main.scroller.scrollTop = that.$.maincontent.clientHeight-that.previousHeight;
+          that.previousHeight = false
+        }else{
+          that.$.main.scroller.scrollTop = that.$.maincontent.clientHeight;
+        }
+      }, 10)
     },
     usernameChanged:function(){
       if (!this.loaded){
@@ -275,7 +327,10 @@
       var nodes = []
       var messageNodes = Polymer.dom(this.root).querySelectorAll('message-bubble')
       messageNodes.forEach(function(n){
-        nodes.push(Polymer.dom(n.root).querySelector(".message"))
+        var node = Polymer.dom(n.root).querySelector(".message")
+        if (isInViewport(node)){
+          nodes.push(node)
+        }
       })
       this.animationConfig['transitionout'][0].nodes = nodes
       this.playAnimation('transitionout')
@@ -290,9 +345,9 @@
           type: "text",
           viewTime: null,
           messageId: null,
-          // metaData: {
-          //   expireTime: 20
-          // }
+          metaData: {
+            expireTime: 5
+          }
         };
         socket.emit('SEND', message, function(data) {
           if (data.messageId) {
@@ -335,24 +390,26 @@
       console.log("VIEW", data, this.messages);
       messages = this.messages;
       date = new Date(data.date);
-      for (i = 0, len = messages.length; i < len; i++) {
-        message = messages[i];
-        ref = data.messageIds;
-        for (j = 0, len1 = ref.length; j < len1; j++) {
-          messageId = ref[j];
+      ref = data.messageIds;
+      for (j = 0, len1 = ref.length; j < len1; j++) {
+        messageId = ref[j];
+        for (i = 0, len = messages.length; i < len; i++) {
+          message = messages[i];
           if (message.id === messageId) {
-            message.viewTime = date;
+            this.set('messages.'+i+'.viewTime', date)
             break;
           }
         }
       }
-      this.set('messages', messages)
     },
     handleDeleteMessage: function(message) {
-      var messages;
-      messages = this.messages;
-      messages.splice(messages.indexOf(message), 1);
-      this.set('messages', messages)
+      var messages = this.messages;
+      for (i = 0; i < messages.length; i++) {
+        if (message.id == messages[i].id) {
+          this.splice('messages', i, 1)
+          break;
+        }
+      }
     },
     ready: function() {
       socket.on('RECEIVE', this.handleNewMessage.bind(this));
@@ -456,6 +513,7 @@
               viewedMessages.push(m.id);
             }
           }
+          _this.previousHeight = _this.$.maincontent.clientHeight - _this.$.main.scroller.scrollTop
           _this.setState({
             messages: messages.concat(_this.messages),
             transitioning: false,

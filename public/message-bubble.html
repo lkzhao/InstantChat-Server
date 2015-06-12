@@ -10,6 +10,17 @@
       padding: 16px;
       border-radius: 4px;
       max-width: 80%;
+      white-space: pre-wrap;
+    }
+    .bottomStatus{
+      padding: 2px 50px 0;
+      color:#888888;
+      font-size: 12px;
+    }
+    .outgoing .layout, .outgoing .bottomStatus{
+      -ms-flex-pack: end;
+      -webkit-justify-content: flex-end;
+      justify-content: flex-end;
     }
     .outgoing .bubble{
       background:  #1abc9c;
@@ -27,20 +38,23 @@
   </style>
   <template>
     <div class$="{{computeClass(message)}}">
-      <template is="dom-if" if="{{isIncoming(message)}}">
-        <img class="profileImage" src="{{user.image}}" on-click="handleContactClick"/>
-      </template>
-      <template is="dom-if" if="{{isText(message)}}">
-        <div class="bubble">{{message.content}}</div>
-      </template>
-      <template is="dom-if" if="{{isAudio(message)}}">
-        <div class="bubble" on-click="handleAudioPlayback">
-          <span>{{audioLength(message)}}</span>
-        </div>
-      </template>
-      <template is="dom-if" if="{{isOutgoing(message)}}">
-        <img class="profileImage" src="{{user.image}}" on-click="handleContactClick"/>
-      </template>
+      <div class="horizontal layout">
+        <template is="dom-if" if="{{isIncoming(message)}}">
+          <img class="profileImage" src="{{user.image}}" on-click="handleContactClick"/>
+        </template>
+        <template is="dom-if" if="{{isText(message)}}">
+          <div class="bubble">{{message.content}}</div>
+        </template>
+        <template is="dom-if" if="{{isAudio(message)}}">
+          <div class="bubble" on-click="handleAudioPlayback">
+            <span>{{audioLength(message)}}</span>
+          </div>
+        </template>
+        <template is="dom-if" if="{{isOutgoing(message)}}">
+          <img class="profileImage" src="{{user.image}}" on-click="handleContactClick"/>
+        </template>
+      </div>
+      <div class="bottomStatus horizontal layout">{{bottomStatus}}</div>
     </div>
   </template>
 </dom-module>
@@ -55,8 +69,43 @@
       },
       current:{
         type:String
+      },
+      bottomStatus:{
+        type:String
       }
     },
+
+    observers: [
+      'messageChanged(message.viewTime)'
+    ],
+
+    messageChanged:function(e){
+      message = this.message
+      if (message.viewTime && message.metaData.expireTime) {
+        if (this.timer) {
+          clearInterval(this.timer);
+        }
+        this.updateTime()
+        this.timer = setInterval(this.updateTime.bind(this), 1000);
+        console.log("Start timer")
+      }
+    },
+
+    updateTime:function(e){
+      message = this.message
+      if (!(message.viewTime && message.metaData.expireTime)){
+        return
+      }
+      var elapsedTime = (new Date() - message.viewTime) / 1000
+      if (elapsedTime > message.metaData.expireTime) {
+        clearInterval(this.timer);
+        this.fire('expired', message)
+      } else {
+        e = (Math.max(0, message.metaData.expireTime - (new Date() - message.viewTime) / 1000)).toFixed(0);
+        this.set('bottomStatus',e + "s")
+      }
+    },
+
     handleAudioPlayback:function(e){
       var player;
       var message = this.message
@@ -81,14 +130,15 @@
         })(this));
       }
     },
+
     handleContactClick:function(e){
       this.fire('image-click', {target:e.target});
     },
 
     computeClass:function(message){
-      var classes = "message horizontal layout"
+      var classes = "message vertical layout"
       if(message.fromUser == auth.profile.username){
-        classes += " outgoing end-justified"
+        classes += " outgoing"
       }else{
         classes += " incoming"
       }
