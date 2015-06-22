@@ -117,6 +117,7 @@
         <div class="content fit">
           <h4>Contacts</h4>
           <iron-selector attr-for-selected="name" selected="{{username}}">
+            <a name="" href="/#/">Nearby</a>
             <template is="dom-repeat" items="{{contacts}}">
               <contact-element name="{{item.username}}" contact="{{item}}" on-profile-open="handleContactClick"/>
             </template>
@@ -129,22 +130,31 @@
           <img class="profileImage" src$="{{otheruser.image}}" user="{{otheruser}}" on-click="handleContactClick"/>
           <div>{{otheruser.username}}</div>
         </paper-toolbar>
-        <div class="content" id="maincontent">
-          <template is="dom-if" if="{{!nomore}}" >
-            <div class="horizontal layout center-justified loadPrevious">
-              <paper-button on-click="loadPrevious">Load Previous</paper-button>
+        <neon-animated-pages id="contents" selected="{{contentPage}}" attr-for-selected="name">
+          <neon-animatable name="nearby">
+            <div class="content">
+              HAHAHAHA
             </div>
-          </template>
-          <template is="dom-repeat" items="{{messages}}">
-            <message-bubble message="[[item]]" current="[[profile.username]]" user="{{getFromUser(item)}}" on-image-click="handleMessageClick" on-expired="handleExpiredMessage"></message-bubble>
-          </template>
-        </div>
-        <div class="inputbar horizontal layout end">
-          <paper-textarea placeholder="Your message..." class="flex" id="message" value="{{message}}"></paper-textarea>
-          <paper-button on-click="sendMessage">
-            Send
-          </paper-button>
-        </div>
+          </neon-animatable>
+          <neon-animatable name="chat">
+            <div class="content" id="maincontent">
+              <template is="dom-if" if="{{!nomore}}" >
+                <div class="horizontal layout center-justified loadPrevious">
+                  <paper-button on-click="loadPrevious">Load Previous</paper-button>
+                </div>
+              </template>
+              <template is="dom-repeat" items="{{messages}}">
+                <message-bubble message="[[item]]" current="[[profile.username]]" user="{{getFromUser(item)}}" on-image-click="handleMessageClick" on-expired="handleExpiredMessage"></message-bubble>
+              </template>
+            </div>
+            <div class="inputbar horizontal layout end">
+              <paper-textarea placeholder="Your message..." class="flex" id="message" value="{{message}}"></paper-textarea>
+              <paper-button on-click="sendMessage">
+                Send
+              </paper-button>
+            </div>
+          </neon-animatable>
+        </neon-animated-pages>
       </paper-header-panel>
     </paper-drawer-panel>
   </template>
@@ -206,6 +216,10 @@
     },
 
     properties: {
+      contentPage:{
+        type:String,
+        value:"nearby"
+      },
       username:{
         type:String,
         observer: 'usernameChanged'
@@ -276,8 +290,12 @@
         var c = this.contactWithUsername(this.username)
         this.setState({
           'otheruser':c,
-          'messages':[]
+          'messages':[],
+          'contentPage':this.username?"chat":"nearby"
         })
+        if (!this.username) {
+          return;
+        }
         var that = this
         this.$.maincontent.style.display="none"
         this.getInitialMessages(this.username, function(){
@@ -320,6 +338,7 @@
     usernameChanged:function(){
       if (!this.loaded){
         this.loaded=true
+        this.set('contentPage', this.username?"chat":"nearby")
         this.getInitialMessages(this.username);
         return
       }
