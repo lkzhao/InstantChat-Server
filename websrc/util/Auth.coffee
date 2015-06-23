@@ -5,6 +5,7 @@ if !username
   token = null
 
 initialSocket = io.connect("", query:"token=#{token}")
+
 initialSocket.on "connect", ->
   console.log "socket connected"
   $.get("/user/profile/#{auth.username}?token=#{auth.token}")
@@ -13,6 +14,7 @@ initialSocket.on "connect", ->
       auth.profile = data
       auth._onProfileChange()
     ).fail( =>
+
     )
 
 initialSocket.on "profileChange", (data) ->
@@ -25,13 +27,25 @@ window.auth =
   token: token
   socket: initialSocket
   callbacks: {}
+  onceCallbacks: {}
   profile: {}
 
   _onProfileChange: ->
+    if @onceCallbacks.profileChange
+      for cb in @onceCallbacks.profileChange
+        console.log cb
+        cb(@profile)
+      @onceCallbacks.profileChange = []
     if @callbacks.profileChange
       for cb in @callbacks.profileChange
         console.log cb
         cb(@profile)
+
+  once: (key, cb)->
+    if @onceCallbacks[key]
+      @onceCallbacks[key].push cb
+    else
+      @onceCallbacks[key] = [cb]
 
   on: (key, cb)->
     if @callbacks[key]
@@ -85,7 +99,7 @@ window.auth =
     ).done((data, textStatus, jqXHR) =>
       if data.success && data.token
         @_saveTokenAndUsername data.token, username
-        callback true
+        @once 'profileChange', callback
       else
         callback false, data.error
     ).fail((jqXHR, textStatus, errorThrown)=>
@@ -106,8 +120,9 @@ window.auth =
     ).done((data, textStatus, jqXHR) =>
       if data.success and data.token
         @profile = {}
+        # wait for profilechange before calling the callback
+        @once 'profileChange', callback
         @_saveTokenAndUsername data.token, username
-        callback true
       else if data.error
         callback false, data.error
     ).fail((jqXHR, textStatus, errorThrown)=>

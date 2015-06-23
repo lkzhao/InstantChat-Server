@@ -12,16 +12,32 @@
       width:100%;
       margin-top:20px;
     }
+    main{
+      width: 400px;
+      margin: 100px auto;
+    }
+    paper-material{
+      padding: 16px;
+      margin-bottom: 16px;
+      background: white;
+    }
+    paper-button{
+      color: var(--accent-color);
+    }
   </style>
 
   <template>
-
-    <paper-input label="Name" id="name"></paper-input>
-    <paper-input label="Username" id="username" value="{{username}}"></paper-input>
-    <paper-input label="Email" id="email"></paper-input>
-    <paper-input label="Password" id="password" value="{{password}}"></paper-input>
-    <paper-button id="btn">Sign Up</paper-button>
-
+    <main>
+    <paper-material elevation="1" class="flex" id="paper">
+      <h3>{{globalError}}</h3>
+      <paper-input label="Name" id="name" value="{{uname}}" error-message="Test"></paper-input>
+      <paper-input label="Username" id="username" value="{{username}}" error-message="{{usernameError}}"></paper-input>
+      <paper-input label="Email" id="email" value="{{email}}" error-message="{{emailError}}"></paper-input>
+      <paper-input label="Password" id="password" value="{{password}}" error-message="{{passwordError}}"></paper-input>
+      <paper-button on-click="handleSignup">Sign Up</paper-button>
+    </paper-material>
+    <a href="/#/login"  id="btn" class="layout vertical center">Login</a>
+    </main>
   </template>
 
 </dom-module>
@@ -36,7 +52,54 @@
       Polymer.NeonSharedElementAnimatableBehavior
     ],
 
+    setState: function(obj){
+      console.log("set state",obj)
+      for(key in obj){
+        this.set(key, obj[key])
+      }
+    },
+
+    handleSignup: function(e){
+      console.log("Sign up")
+      auth.signup(this.username, this.password, this.email, this.uname, (function(_this) {
+        return function(success, error) {
+          console.log("Signup done", success, error)
+          var errors, field, info;
+          if (success) {
+            document.querySelector('app-router').go('/')
+          } else {
+            errors = {
+              loading: false,
+              usernameError: null,
+              passwordError: null,
+              emailError: null,
+              globalError: null
+            };
+            for (field in error) {
+              info = error[field];
+              if (field === "error") {
+                errors.globalError = info;
+              }
+              if (field === "email") {
+                errors.emailError = info.message;
+              } else if (field === "hashed_password") {
+                errors.passwordError = info.message;
+              } else if (field === "username") {
+                errors.usernameError = info.message;
+              }
+            }
+            _this.setState(errors);
+          }
+        };
+      })(this));
+    },
+
     properties: {
+      usernameError:String,
+      emailError:String,
+      passwordError:String,
+      email:String,
+      uname:String,
       username:{
         type:String,
         notify: true
@@ -49,9 +112,8 @@
         type: Object,
         value: function() {
           return {
-            'btn': this.$.btn,
-            'username': this.$.username,
-            'password': this.$.password
+            'paper': this.$.paper,
+            'btn':this.$.btn
           }
         }
       },
@@ -62,15 +124,11 @@
           return {
             'entry': [{
               name: 'hero-animation',
+              id: 'paper',
+              toPage: this
+            },{
+              name: 'hero-animation',
               id: 'btn',
-              toPage: this
-            },{
-              name: 'hero-animation',
-              id: 'username',
-              toPage: this
-            },{
-              name: 'hero-animation',
-              id: 'password',
               toPage: this
             },{
               name: 'fade-in-animation',
@@ -81,15 +139,11 @@
             }],
             'exit': [{
               name: 'hero-animation',
+              id: 'paper',
+              fromPage: this
+            },{
+              name: 'hero-animation',
               id: 'btn',
-              fromPage: this
-            },{
-              name: 'hero-animation',
-              id: 'username',
-              fromPage: this
-            },{
-              name: 'hero-animation',
-              id: 'password',
               fromPage: this
             },{
               name: 'fade-out-animation',

@@ -4,21 +4,40 @@
 <link rel="import" href="bower_components/paper-button/paper-button.html">
 
 
+<link rel="import" href="bower_components/paper-material/paper-material.html">
+<link rel="import" href="app-theme.html">
+
 <dom-module id="login-content">
   <style>
     paper-button{
       width:100%;
       margin-top:20px;
     }
+    main{
+      width: 400px;
+      margin: 100px auto;
+    }
+    paper-material{
+      padding: 16px;
+      margin-bottom: 16px;
+      background: white;
+    }
+    paper-button{
+      color: var(--default-primary-color);
+    }
   </style>
 
   <template>
-    <h3>{{globalError}}</h3>
-    <paper-input label="Username or Email" id="username" value="{{username}}" errorMessage="{{usernameError}}"></paper-input>
-    <paper-input label="Password" id="password" value="{{password}}" errorMessage="{{passwordError}}"></paper-input>
-    <paper-button id="btn" class="flex" on-click="handleLogin">Login</paper-button>
+    <main>
+      <paper-material elevation="1" class="flex" id="paper">
+        <h3>{{globalError}}</h3>
+        <paper-input label="Username or Email" id="username" value="{{username}}" errorMessage="{{usernameError}}"></paper-input>
+        <paper-input label="Password" id="password" value="{{password}}" errorMessage="{{passwordError}}"></paper-input>
+        <paper-button class="flex" on-click="handleLogin">Login</paper-button>
+      </paper-material>
+      <a href="/#/signup" id="btn" class="layout vertical center">Sign Up</a>
+    </main>
   </template>
-
 </dom-module>
 
 <script>
@@ -60,9 +79,8 @@
         type: Object,
         value: function() {
           return {
-            'username': this.$.username,
-            'btn': this.$.btn,
-            'password': this.$.password
+            'paper': this.$.paper,
+            'btn': this.$.btn
           }
         }
       },
@@ -76,11 +94,7 @@
               toPage: this
             },{
               name: 'hero-animation',
-              id: 'username',
-              toPage: this
-            },{
-              name: 'hero-animation',
-              id: 'password',
+              id: 'paper',
               toPage: this
             }],
             'exit': [{
@@ -89,11 +103,7 @@
               fromPage: this
             },{
               name: 'hero-animation',
-              id: 'username',
-              fromPage: this
-            },{
-              name: 'hero-animation',
-              id: 'password',
+              id: 'paper',
               fromPage: this
             }]
           }
