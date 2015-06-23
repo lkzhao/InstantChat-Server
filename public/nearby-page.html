@@ -12,10 +12,58 @@
 
 <dom-module id="nearby-page">
   <style>
+    paper-material{
+      height: 300px;
+      margin-bottom: 20px;
+    }
+    .column{
+    }
+    .column:not(:last-child){
+      margin-right: 20px;
+    }
+    #root{
+      padding: 20px;
+      display: -ms-flexbox;
+      -ms-flex-direction: column;
+      -ms-flex-wrap: wrap;
+      display: flex;
+      flex-direction: column;
+      flex-wrap: wrap;
+    }
   </style>
   <template>
-    <div>
-      HAHAHA
+    <div id="root" class="layout horizontal">
+      <div class="column layout vertical flex">
+        <paper-material elevation="1">
+        </paper-material>
+        <paper-material elevation="1">
+        </paper-material>
+        <paper-material elevation="1">
+        </paper-material>
+        <paper-material elevation="1">
+        </paper-material>
+      </div>
+      <div class="column layout vertical flex">
+        <paper-material elevation="1">
+        </paper-material>
+        <paper-material elevation="1">
+        </paper-material>
+        <paper-material elevation="1">
+        </paper-material>
+        <paper-material elevation="1">
+        </paper-material>
+      </div>
+      <div class="column layout vertical flex">
+        <paper-material elevation="1">
+        </paper-material>
+        <paper-material elevation="1">
+        </paper-material>
+        <paper-material elevation="1">
+        </paper-material>
+        <paper-material elevation="1">
+        </paper-material>
+      </div>
+
     </div>
   </template>
 </dom-module>
