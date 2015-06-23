@@ -156,7 +156,7 @@
     ],
     logout: function(){
       auth.logout()
-      document.querySelector('app-router').go('/login')
+      MoreRouting.navigateTo('/login')
       close()
     },
     close: function(){

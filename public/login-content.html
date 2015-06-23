@@ -40,7 +40,7 @@
         return
       auth.authenticate(this.username, this.password, function(success, error){
         if (success){
-          document.querySelector('app-router').go('/')
+          MoreRouting.navigateTo('/')
         }else{
           this.set('globalError', error)
         }

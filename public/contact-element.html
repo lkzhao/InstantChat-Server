@@ -54,7 +54,7 @@
     ready: function() {
     },
     computeUrl: function(username){
-      return "#/chat/"+username
+      return MoreRouting.urlFor('chat', {userId: username})
     }
   });
 </script>

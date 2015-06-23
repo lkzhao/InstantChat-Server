@@ -15,6 +15,7 @@
 <link rel="import" href="contact-element.html">
 <link rel="import" href="message-bubble.html">
 <link rel="import" href="app-theme.html">
+<link rel="import" href="nearby-page.html">
 
 <dom-module id="chat-content">
   <style>
@@ -133,7 +134,7 @@
         <neon-animated-pages id="contents" selected="{{contentPage}}" attr-for-selected="name">
           <neon-animatable name="nearby">
             <div class="content">
-              HAHAHAHA
+              <nearby-page></nearby-page>
             </div>
           </neon-animatable>
           <neon-animatable name="chat">
@@ -338,10 +339,12 @@
     usernameChanged:function(){
       if (!this.loaded){
         this.loaded=true
+        console.log(this.username)
         this.set('contentPage', this.username?"chat":"nearby")
         this.getInitialMessages(this.username);
         return
       }
+      console.log(this.username)
       this.transitioning = true
       var nodes = []
       var messageNodes = Polymer.dom(this.root).querySelectorAll('message-bubble')

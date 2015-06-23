@@ -31,24 +31,20 @@
   <meta name="msapplication-TileImage" content="images/touch/ms-touch-icon-144x144-precomposed.png">
 
   <title>Instant Chat</title>
-  <link rel="stylesheet" href="stylesheets/animate.min.css" />
-  <link rel="stylesheet" href="stylesheets/font-awesome.min.css" />
-  <link href="bower_components/iron-icons/iron-icons.html" rel="import">
-  <link rel="stylesheet" href="stylesheets/main.css">
-  <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
-  <link rel="import" href="/bower_components/app-router/app-router.html">
-</head>
-<body>
-  <div id="main"></div>
-  <app-router>
-    <app-route path="/" import="chat-page.html"></app-route>
-    <app-route path="/chat/:username" import="chat-page.html" onUrlChange="updateModel"></app-route>
-    <app-route path="/:page" import="login-page.html" onUrlChange="updateModel"></app-route>
-  </app-router>
   <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="javascripts/aurora.js"></script>
   <script src="javascripts/aac.js"></script>
   <script src="javascripts/main.js"></script>
+  <link rel="stylesheet" href="stylesheets/animate.min.css" />
+  <link rel="stylesheet" href="stylesheets/font-awesome.min.css" />
+  <link href="bower_components/iron-icons/iron-icons.html" rel="import">
+  <link rel="stylesheet" href="stylesheets/main.css">
+  <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+
+  <link rel="import" href="/app-routes.html">
+</head>
+<body>
+  <app-routes></app-routes>
 </body>
 </html>
