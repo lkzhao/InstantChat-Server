@@ -7,76 +7,293 @@
 <link rel="import" href="bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="bower_components/neon-animation/neon-animation.html">
 
+
 <link rel="import" href="signup-content.html">
 <link rel="import" href="login-content.html">
 
 <dom-module id="nearby-page">
   <style>
     paper-material{
-      height: 300px;
+      float: left;
       margin-bottom: 20px;
-    }
-    .column{
-    }
-    .column:not(:last-child){
-      margin-right: 20px;
+      background: white;
+      width: 300px;
+      opacity: 0;
     }
     #root{
-      padding: 20px;
-      display: -ms-flexbox;
-      -ms-flex-direction: column;
-      -ms-flex-wrap: wrap;
-      display: flex;
-      flex-direction: column;
-      flex-wrap: wrap;
+      margin:20px;
     }
+    .grid {
+      margin: 0 auto;
+      -webkit-perspective: 1300px;
+      perspective: 1300px;
+      -webkit-perspective-origin: 50% 50%; /* Chrome, Safari, Opera */
+      perspective-origin: 50% 50%;
+    }
+
+    .grid paper-material.animate {
+      -webkit-transform-style: preserve-3d;
+      transform-style: preserve-3d;
+      -webkit-transform-origin: 0% 0%;
+      transform-origin: 0% 0%;
+      -webkit-transform: rotateX(-50deg);
+      transform: rotateX(-50deg);
+      -webkit-animation: flipX .8s ease-in-out forwards;
+      animation: flipX .8s ease-in-out forwards;
+    }
+
+    @-webkit-keyframes flipX {
+      0% { }
+      100% { -webkit-transform: rotateX(0deg); opacity: 1; }
+    }
+
+    @keyframes flipX {
+      0% { }
+      100% { -webkit-transform: rotateX(0deg); transform: rotateX(0deg); opacity: 1; }
+    }
+
+    paper-material {
+      overflow: hidden;
+    }
+
+    paper-material img {
+      -webkit-transition: -webkit-transform 0.4s;
+      -moz-transition: -moz-transform 0.4s;
+      transition: transform 0.4s;
+    }
+
+    paper-material:hover img {
+      -webkit-transform: translateY(-50px);
+      -moz-transform: translateY(-50px);
+      -ms-transform: translateY(-50px);
+      transform: translateY(-50px);
+    }
+    .grid figcaption {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      padding: 20px;
+      background: #2c3f52;
+      color: #ed4e6e;
+    }
+    .grid figcaption h3 {
+      margin: 0;
+      padding: 0;
+      color: #fff;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      margin-bottom: 15px;
+    }
+
+    .grid figcaption span:before {
+      content: 'by ';
+    }
+
+    .grid figcaption a {
+      text-align: center;
+      padding: 5px 10px;
+      border-radius: 2px;
+      display: inline-block;
+      background: #ed4e6e;
+      color: #fff;
+    }
+    figcaption {
+      height: 100px;
+      width: 100%;
+      top: auto;
+      bottom: 0;
+      opacity: 0;
+      -webkit-transform: translateY(100%);
+      -moz-transform: translateY(100%);
+      -ms-transform: translateY(100%);
+      transform: translateY(100%);
+      -webkit-backface-visibility: hidden;
+      -moz-backface-visibility: hidden;
+      backface-visibility: hidden;
+      -webkit-transition: -webkit-transform 0.4s, opacity 0.1s 0.3s;
+      -moz-transition: -moz-transform 0.4s, opacity 0.1s 0.3s;
+      transition: transform 0.4s, opacity 0.1s 0.3s;
+    }
+
+    paper-material:hover figcaption{
+      opacity: 1;
+      -webkit-transform: translateY(0px);
+      -moz-transform: translateY(0px);
+      -ms-transform: translateY(0px);
+      transform: translateY(0px);
+      -webkit-transition: -webkit-transform 0.4s, opacity 0.1s;
+      -moz-transition: -moz-transform 0.4s, opacity 0.1s;
+      transition: transform 0.4s, opacity 0.1s;
+    }
+
+    figcaption a {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+    }
+
+    paper-material.grid-item--width2 { width: 620px; }
   </style>
   <template>
-    <div id="root" class="layout horizontal">
-      <div class="column layout vertical flex">
-        <paper-material elevation="1">
+    <div id="root">
+      <div id="grid" class="grid">
+        <paper-material elevation="1" class="layout vertical grid-item">
+          Test
         </paper-material>
-        <paper-material elevation="1">
-        </paper-material>
-        <paper-material elevation="1">
-        </paper-material>
-        <paper-material elevation="1">
-        </paper-material>
-      </div>
-      <div class="column layout vertical flex">
-        <paper-material elevation="1">
-        </paper-material>
-        <paper-material elevation="1">
-        </paper-material>
-        <paper-material elevation="1">
-        </paper-material>
-        <paper-material elevation="1">
-        </paper-material>
-      </div>
-      <div class="column layout vertical flex">
-        <paper-material elevation="1">
-        </paper-material>
-        <paper-material elevation="1">
-        </paper-material>
-        <paper-material elevation="1">
-        </paper-material>
-        <paper-material elevation="1">
-        </paper-material>
-      </div>
+        <template id="repeat" is="dom-repeat" items="{{posts}}" on-dom-change="handleNewPost">
+          <paper-material elevation="1" class$="{{computeClass(item)}}">
+            <img class="flex " src="{{item.preview_url}}" height="{{computeHeight(item)}}"></img>
+            <figcaption>
+              <h3>{{item.tags}}</h3>
+              <span>{{item.author}}</span>
+              <a href="{{item.jpeg_url}}">Take a look</a>
+            </figcaption>          
+          </paper-material>
+        </template>
 
+        <template is="dom-if" if="{{loading}}">
+          <iron-icon icon="cached"></iron-icon>
+        </template>
+      </div>
     </div>
   </template>
 </dom-module>
 
 <script>
-  // register a new element called sidebar-element
   Polymer({
     is: "nearby-page",
     properties: {
-      username:String,
-      password:String
+      posts:{
+        type:Array,
+        value:[]
+      },
+      page:{
+        type:Number,
+        value:1
+      }
+    },
+    login: function(){
+      FB.login(function(response) {
+        console.log(response);
+        // The response object is returned with a status field that lets the
+        // app know the current login status of the person.
+        // Full docs on the response object can be found in the documentation
+        // for FB.getLoginStatus().
+        if (response.status === 'connected') {
+          // Logged into your app and Facebook.
+          FB.api('/me/home', function(response) {
+            console.log('Successful login for: ' + response.name);
+            console.log(response);
+          });
+        } else if (response.status === 'not_authorized') {
+          // The person is logged into Facebook, but not your app.
+          console.log('Please log into this app.')
+        } else {
+          // The person is not logged into Facebook, so we're not sure if
+          // they are logged into this app or not.
+          console.log('Please log into Facebook.')
+        }
+      }, {scope: 'public_profile,email,read_stream'});
     },
     ready: function() {
+    },
+    isWideImage: function(item){
+      return item.preview_height*1.4<item.preview_width
+    },
+    computeClass:function(item){
+      var defaultClass = "layout vertical grid-item new"
+      if(this.isWideImage(item)){
+        defaultClass+=" grid-item--width2"
+      }
+      return defaultClass
+    },
+    computeHeight:function(item){
+      var cellWidth = this.isWideImage(item)?620:300;
+      return cellWidth/item.preview_width*item.preview_height
+    },
+    handleScroll:function(e){
+      this.viewScrollTop = e.target.scrollTop
+      var scrollH = this.$.root.clientHeight - this.viewScrollTop - $(window).height()
+      if (scrollH<1500){
+        this.getNewPage()
+      }
+      this._onScrollFn()
+    },
+    _onScrollFn : function() {
+      var self = this;
+      if( !this.didScroll ) {
+        this.didScroll = true;
+        setTimeout( function() { self._scrollPage(); }, 60 );
+      }
+    },
+    _scrollPage : function() {
+      var self = this;
+      var perspY = this.viewScrollTop+$(window).height()/2
+      this.$.grid.style.WebkitPerspectiveOrigin = '50% ' + perspY + 'px';
+      this.$.grid.style.MozPerspectiveOrigin = '50% ' + perspY + 'px';
+      this.$.grid.style.perspectiveOrigin = '50% ' + perspY + 'px';
+      setTimeout( function() {
+        var elems = $(self.$.grid.querySelectorAll(".grid-item:not(.animate)"))
+        elems.each( function( i, el ) {
+          if(self.inViewport(el)){
+            var randDuration = ( Math.random() * ( 0.7 - 0.4 ) + 0.4 ) + 's';
+            el.style.WebkitAnimationDuration = randDuration;
+            el.style.MozAnimationDuration = randDuration;
+            el.style.animationDuration = randDuration;
+            $(el).addClass("animate")
+          }
+        });
+          
+        self.didScroll = false;
+      }, 25 );
+    },
+    inViewport:function(el){
+      return $(el).position().top+$(el).height()/4<this.viewScrollTop+$(window).height()
+    },
+    getNewPage: function(){
+      console.log("get new page")
+      if (this.loading){
+        return;
+      }
+      this.set('loading', true)
+      var that = this
+      $.get("https://yande.re/post.json?limit=20&page="+that.page,function(data){
+        console.log(data)
+
+        that.set('page', that.page+1)
+        that.set('posts', that.posts.concat(data))
+        that.set('loading', false)
+      })
+    },
+    handleNewPost:function(e){
+      if(!this.msnry) return
+      var newElems = this.$.grid.querySelectorAll(".grid-item.new")
+      $(newElems).removeClass("new")
+      this.msnry.appended(newElems)
+      var that = this
+      $(newElems).each( function( i, el ) {
+        if(that.inViewport(el)){
+          $(el).addClass("animate")
+        }
+      });
+    },
+    loaded:function(){
+      if(this.masonryLoaded){
+        return;
+      }
+      this.masonryLoaded=true
+      this.viewScrollTop = 0
+      var that = this
+      setTimeout(function(){
+        that.msnry = new Masonry( that.$.grid, {
+          itemSelector: '.grid-item',
+          gutter: 20,
+          columnWidth: 300,
+          isFitWidth: true,
+          transitionDuration : 0
+        });
+        that.getNewPage();
+      }, 100)
     }
   });
 </script>

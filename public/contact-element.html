@@ -35,9 +35,11 @@
     }
   </style>
   <template>
-    <a href="{{computeUrl(contact.username)}}" class="contact layout horizontal center" name="[[contact.username]]">
-      <img src="[[contact.image]]" alt="[[contact.username]]" >
-      <span>[[contact.username]]</span>
+    <a href$="[[url]]" class="contact layout horizontal center">
+      <template is="dom-if" if="[[imageUrl]]" >
+        <img src="[[imageUrl]]" >
+      </template>
+      <content></content>
       <paper-ripple/>
     </a>
   </template>
@@ -48,13 +50,25 @@
     is: "contact-element",
     properties: {
       contact:{
-        type:Object
+        type:Object,
+        observer:"contactChanged"
+      },
+      url:{
+        type:String
+      },
+      imageUrl:{
+        type:String
       }
     },
+    contactChanged:function(){
+      this.set('url', this.computeUrl(this.contact.username))
+      this.set('imageUrl', this.contact.image)
+    },
     ready: function() {
+
     },
     computeUrl: function(username){
-      return MoreRouting.urlFor('chat', {userId: username})
+      return MoreRouting.urlFor('chat', {username: username})
     }
   });
 </script>

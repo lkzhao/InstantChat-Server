@@ -7,8 +7,10 @@
   <style>
   </style>
   <template>
+    <more-route name="chat" path="/chat/:username" params="{{params}}" active="{{chatActive}}"></more-route>
+    <more-route name="nearby" path="/"></more-route>
     <neon-animated-pages id="contents" selected="[[page]]" attr-for-selected="name">
-      <chat-content name="chat" username="{{username}}" on-profile-open="handleProfileOpen"></chat-content>
+      <chat-content name="chat" username="{{getUsername(chatActive,params.username)}}" on-profile-open="handleProfileOpen"></chat-content>
       <profile-dialog name="profile" id="profile" profile="{{profile}}" on-close="handleDialogClose"></profile-dialog>
     </neon-animated-pages>
   </template>
@@ -19,16 +21,26 @@
   Polymer({
     is: "chat-page",
 
+    getUsername: function(chatActive, username){
+      return chatActive? username:undefined
+    },
     properties: {
       page:{
         type:String,
         value:"chat"
+      },
+      params:{
+        type:Object,
+        observer: 'paramsChanged'
       }
     },
-
+    paramsChanged:function(e){
+      console.log(this.params)
+    },
     handleDialogClose: function(e){
       this.set('page',"chat")
     },
+
     handleProfileOpen: function(e){
       this.set('profile', e.detail)
       this.set('page',"profile")

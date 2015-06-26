@@ -11,6 +11,7 @@
 <link rel="import" href="bower_components/paper-button/paper-button.html">
 <link rel="import" href="bower_components/paper-fab/paper-fab.html">
 <link rel="import" href="bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="bower_components/iron-pages/iron-pages.html">
 
 <link rel="import" href="contact-element.html">
 <link rel="import" href="message-bubble.html">
@@ -116,29 +117,29 @@
           <div title class="bottom title" id="username">{{profile.username}}</div>
         </div>
         <div class="content fit">
-          <h4>Contacts</h4>
-          <iron-selector attr-for-selected="name" selected="{{username}}">
-            <a name="" href="/#/">Nearby</a>
+          <iron-selector attr-for-selected="name" selected="[[username]]">
+            <contact-element url="/#!/" name="">Nearby</contact-element>
+            <h4>Contacts</h4>
             <template is="dom-repeat" items="{{contacts}}">
-              <contact-element name="{{item.username}}" contact="{{item}}" on-profile-open="handleContactClick"/>
+              <contact-element name="{{item.username}}" contact="{{item}}" on-profile-open="handleContactClick">{{item.username}}</contact-element>
             </template>
           </iron-selector>
         </div>
       </paper-header-panel>
-      <paper-header-panel main mode="waterfall" class="main" id="main">
-        <paper-toolbar>
+      <paper-header-panel main mode="{{headerMode(contentPage)}}" class="main" id="headerPanel">
+        <paper-toolbar id="mainToolbar">
           <paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
           <img class="profileImage" src$="{{otheruser.image}}" user="{{otheruser}}" on-click="handleContactClick"/>
           <div>{{otheruser.username}}</div>
         </paper-toolbar>
-        <neon-animated-pages id="contents" selected="{{contentPage}}" attr-for-selected="name">
-          <neon-animatable name="nearby">
+        <iron-pages id="maincontent" selected="{{contentPage}}" attr-for-selected="name">
+          <section name="nearby">
             <div class="content">
-              <nearby-page></nearby-page>
+              <nearby-page id="nearbyPage"></nearby-page>
             </div>
-          </neon-animatable>
-          <neon-animatable name="chat">
-            <div class="content" id="maincontent">
+          </section>
+          <section name="chat">
+            <div class="content">
               <template is="dom-if" if="{{!nomore}}" >
                 <div class="horizontal layout center-justified loadPrevious">
                   <paper-button on-click="loadPrevious">Load Previous</paper-button>
@@ -154,8 +155,8 @@
                 Send
               </paper-button>
             </div>
-          </neon-animatable>
-        </neon-animated-pages>
+          </section>
+        </iron-pages>
       </paper-header-panel>
     </paper-drawer-panel>
   </template>
@@ -182,6 +183,9 @@
       Polymer.NeonSharedElementAnimatableBehavior,
       Polymer.NeonAnimationRunnerBehavior
     ],
+    headerMode:function(contentPage){
+      return contentPage=="chat"?"waterfall":"scroll"
+    },
     getFromUser:function(message){
       if (message.fromUser==this.profile.username){
         return this.profile
@@ -215,7 +219,6 @@
       var message = e.detail
       this.handleDeleteMessage(message)
     },
-
     properties: {
       contentPage:{
         type:String,
@@ -254,6 +257,12 @@
               timing: {
                 delay: 150
               }
+            },{
+              name: 'slide-up-animation',
+              node: this.$.mainToolbar,
+              timing: {
+                delay: 150
+              }
             }],
             'transitionin': [{
               name: 'cascaded-animation',
@@ -261,6 +270,12 @@
             },{
               name: 'fade-in-animation',
               node: this.$.maincontent,
+              timing: {
+                delay: 150
+              }
+            },{
+              name: 'slide-down-animation',
+              node: this.$.mainToolbar,
               timing: {
                 delay: 150
               }
@@ -295,10 +310,13 @@
           'contentPage':this.username?"chat":"nearby"
         })
         if (!this.username) {
+          this.animationConfig['transitionin'][0].nodes = []
+          this.playAnimation('transitionin')
           return;
         }
         var that = this
         this.$.maincontent.style.display="none"
+        this.$.mainToolbar.style.display="none"
         this.getInitialMessages(this.username, function(){
           that.async(function(){
             var messageNodes = Polymer.dom(that.root).querySelectorAll('message-bubble')
@@ -312,8 +330,11 @@
             that.animationConfig['transitionin'][0].nodes = nodes
             that.playAnimation('transitionin')
             that.$.maincontent.style.display="block"
+            that.$.mainToolbar.style.display="block"
           })
         });
+      }else if(this.contentPage=="nearby"){
+        this.$.nearbyPage.loaded()
       }
     },
     contactWithUsername:function(username){
@@ -328,15 +349,17 @@
     messagesChanged:function(){
       var that = this
       setTimeout(function(){
+        if (that.contentPage!="chat") return;
         if (that.previousHeight){
-          that.$.main.scroller.scrollTop = that.$.maincontent.clientHeight-that.previousHeight;
+          that.$.headerPanel.scroller.scrollTop = that.$.maincontent.clientHeight-that.previousHeight;
           that.previousHeight = false
         }else{
-          that.$.main.scroller.scrollTop = that.$.maincontent.clientHeight;
+          that.$.headerPanel.scroller.scrollTop = that.$.maincontent.clientHeight;
         }
       }, 10)
     },
     usernameChanged:function(){
+      console.log("Username changed "+this.username)
       if (!this.loaded){
         this.loaded=true
         console.log(this.username)
@@ -344,7 +367,7 @@
         this.getInitialMessages(this.username);
         return
       }
-      console.log(this.username)
+      if(this.transitioning)return;
       this.transitioning = true
       var nodes = []
       var messageNodes = Polymer.dom(this.root).querySelectorAll('message-bubble')
@@ -433,7 +456,17 @@
         }
       }
     },
+    handleScroll:function(e){
+      if(this.contentPage == "nearby")
+        this.$.nearbyPage.handleScroll(e)
+    },
     ready: function() {
+      $(this.$.headerPanel).scroll(this.handleScroll.bind(this))
+      this.async(function(){
+        if(this.contentPage=="nearby"){
+          this.$.nearbyPage.loaded()
+        }
+      },100)
       socket.on('RECEIVE', this.handleNewMessage.bind(this));
       socket.on('VIEW', this.handleViewMessage.bind(this));
     },
@@ -531,7 +564,7 @@
               viewedMessages.push(m.id);
             }
           }
-          _this.previousHeight = _this.$.maincontent.clientHeight - _this.$.main.scroller.scrollTop
+          _this.previousHeight = _this.$.maincontent.clientHeight - _this.$.headerPanel.scroller.scrollTop
           _this.setState({
             messages: messages.concat(_this.messages),
             transitioning: false,

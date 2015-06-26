@@ -9,23 +9,17 @@
   </style>
   <template>
     <more-routing-config driver="hash"></more-routing-config>
-    <more-route name="chat" path="/chat/:userId"></more-route>
-    <more-route-selector selectedParams="{{params}}">
+    <more-route-selector>
       <neon-animated-pages>
         <section route="/">
-          <chat-page username="{{params.userId}}"></chat-page>
+          <chat-page></chat-page>
         </section>
-
         <section route="/login">
           <login-content name="login" username="{{username}}" password="{{password}}"></login-content>
         </section>
 
         <section route="/signup">
           <signup-content name="signup" username="{{username}}" password="{{password}}"></signup-content>
-        </section>
-
-        <section route="chat">
-          <chat-page username="{{params.userId}}"></chat-page>
         </section>
       </neon-animated-pages>
     </more-route-selector>
@@ -36,6 +30,15 @@
   Polymer({
     is: "app-routes",
 
+    properties: {
+      params:{
+        type:Object,
+        observer: 'paramsChanged'
+      }
+    },
+    paramsChanged:function(e){
+      console.log(this.params)
+    },
     ready: function() {
       // if (!auth.loggedIn()){
       //   MoreRouting.navigateTo('/login')

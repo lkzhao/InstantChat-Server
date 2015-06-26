@@ -19,16 +19,11 @@
   <!-- Add to homescreen for Chrome on Android -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="application-name" content="Polymer Starter Kit">
-  <link rel="icon" sizes="192x192" href="images/touch/chrome-touch-icon-192x192.png">
 
   <!-- Add to homescreen for Safari on iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Polymer Starter Kit">
-  <link rel="apple-touch-icon" href="images/touch/apple-touch-icon.png">
-
-  <!-- Tile icon for Win8 (144x144) -->
-  <meta name="msapplication-TileImage" content="images/touch/ms-touch-icon-144x144-precomposed.png">
 
   <title>Instant Chat</title>
   <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
@@ -41,7 +36,24 @@
   <link href="bower_components/iron-icons/iron-icons.html" rel="import">
   <link rel="stylesheet" href="stylesheets/main.css">
   <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+  <script src="bower_components/masonry/dist/masonry.pkgd.min.js"></script>
+  <script>
+    window.fbAsyncInit = function() {
+      FB.init({
+        appId      : '388546078018057',
+        xfbml      : true,
+        version    : 'v2.3'
+      });
+    };
 
+    (function(d, s, id){
+       var js, fjs = d.getElementsByTagName(s)[0];
+       if (d.getElementById(id)) {return;}
+       js = d.createElement(s); js.id = id;
+       js.src = "//connect.facebook.net/en_US/sdk.js";
+       fjs.parentNode.insertBefore(js, fjs);
+     }(document, 'script', 'facebook-jssdk'));
+  </script>
   <link rel="import" href="/app-routes.html">
 </head>
 <body>
