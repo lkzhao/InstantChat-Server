@@ -2,6 +2,7 @@
 <link rel="import" href="bower_components/neon-animation/neon-animation.html">
 <link rel="import" href="profile-dialog.html">
 <link rel="import" href="chat-content.html">
+<link rel="import" href="post-dialog.html">
 
 <dom-module id="chat-page">
   <style>
@@ -10,8 +11,9 @@
     <more-route name="chat" path="/chat/:username" params="{{params}}" active="{{chatActive}}"></more-route>
     <more-route name="nearby" path="/"></more-route>
     <neon-animated-pages id="contents" selected="[[page]]" attr-for-selected="name">
-      <chat-content name="chat" username="{{getUsername(chatActive,params.username)}}" on-profile-open="handleProfileOpen"></chat-content>
+      <chat-content name="chat" username="{{getUsername(chatActive,params.username)}}" on-profile-open="handleProfileOpen" on-post-open="handlePostOpen" id="chat"></chat-content>
       <profile-dialog name="profile" id="profile" profile="{{profile}}" on-close="handleDialogClose"></profile-dialog>
+      <post-dialog name="post" id="post" post="{{post}}" on-close="handleDialogClose"></post-dialog>
     </neon-animated-pages>
   </template>
 </dom-module>
@@ -40,10 +42,16 @@
     handleDialogClose: function(e){
       this.set('page',"chat")
     },
-
     handleProfileOpen: function(e){
-      this.set('profile', e.detail)
+      this.set('profile', e.detail.profile)
+      this.$.chat.sharedElements = e.detail.sharedElements
+      console.log(e.detail.sharedElements)
       this.set('page',"profile")
+    },
+    handlePostOpen: function(e){
+      this.set('post', e.detail.post)
+      this.$.chat.sharedElements = e.detail.sharedElements
+      this.set('page',"post")
     },
 
     ready: function() {

@@ -130,7 +130,13 @@
     },
 
     handleContactClick:function(e){
-      this.fire('image-click', {target:e.target});
+      this.fire('profile-open', {
+        profile:this.user,
+        sharedElements:{
+          'background': e.target,
+          'image': e.target
+        }
+      })
     },
 
     computeClass:function(message){

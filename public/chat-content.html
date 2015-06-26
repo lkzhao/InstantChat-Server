@@ -121,7 +121,7 @@
             <contact-element url="/#!/" name="">Nearby</contact-element>
             <h4>Contacts</h4>
             <template is="dom-repeat" items="{{contacts}}">
-              <contact-element name="{{item.username}}" contact="{{item}}" on-profile-open="handleContactClick">{{item.username}}</contact-element>
+              <contact-element name="{{item.username}}" contact="{{item}}">{{item.username}}</contact-element>
             </template>
           </iron-selector>
         </div>
@@ -146,7 +146,7 @@
                 </div>
               </template>
               <template is="dom-repeat" items="{{messages}}">
-                <message-bubble message="[[item]]" current="[[profile.username]]" user="{{getFromUser(item)}}" on-image-click="handleMessageClick" on-expired="handleExpiredMessage"></message-bubble>
+                <message-bubble message="[[item]]" current="[[profile.username]]" user="{{getFromUser(item)}}" on-expired="handleExpiredMessage"></message-bubble>
               </template>
             </div>
             <div class="inputbar horizontal layout end">
@@ -192,27 +192,23 @@
       }
       return this.contactWithUsername(message.fromUser)
     },
-    handleMessageClick:function(e){
-      this.sharedElements = {
-        'background': e.detail.target,
-        'image': e.detail.target
-      }
-      this.fire('profile-open', e.target.user);
-    },
     handleContactClick:function(e){
-      this.sharedElements = {
-        'background': e.target,
-        'image': e.target
-      }
-      this.fire('profile-open', e.target.user);
+      this.fire('profile-open', {
+        profile:e.target.user,
+        sharedElements:{
+          'background': e.target,
+          'image': e.target
+        }
+      });
     },
-
     handleProfileClick:function(){
-      this.sharedElements = {
-        'background': this.$.image,
-        'image': this.$.image
-      }
-      this.fire('profile-open', auth.profile);
+      this.fire('profile-open', {
+        profile:auth.profile,
+        sharedElements:{
+          'background': this.$.image,
+          'image': this.$.image
+        }
+      });
     },
 
     handleExpiredMessage:function(e){
