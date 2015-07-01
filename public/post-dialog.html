@@ -18,8 +18,9 @@
     }
     paper-material{
       width: 700px;
+      overflow: hidden;
       margin: 50px auto;
-      background: white;
+      background: #2c3f52;
       position: relative;
       z-index: 1000;
     }
@@ -115,11 +116,15 @@
     isCurrentUser: function(profile){
       return profile.username==auth.profile.username
     },
-    handleProfileChange: function(){
-      this.set("selected", "info")
-      this.async(function(){
-        this.animationConfig['entry'][3].node = this.$$("#edit")
-      })
+    isWideImage: function(item){
+      return item.actual_preview_height*1.4<item.actual_preview_width
+    },
+    handlePostChange: function(){
+      if(this.isWideImage(this.post)){
+        this.animationConfig['entry'][3].transformFrom='translate(0px,-58px)'
+      }else{
+        this.animationConfig['entry'][3].transformFrom='translate(0px,-117px)'
+      }
     },
     properties: {
       entryPageAnimation:{
@@ -132,10 +137,10 @@
         type:String,
         value:"info"
       },
-      profile:{
+      post:{
         type:Object,
         notify: true,
-        observer: 'handleProfileChange'
+        observer: 'handlePostChange'
       },
       sharedElements: {
         type: Object,
@@ -167,7 +172,12 @@
               timing: {
                 delay: 500
               }
-            }],
+            },{
+              name: 'transform-animation',
+              transformFrom: 'translate(0px,-117px)',
+              transformTo: 'none',
+              node: this.$.image
+            },],
             'exit': [{
               name: 'transform-animation',
               transformFrom: 'none',

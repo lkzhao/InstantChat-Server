@@ -115,7 +115,7 @@
     }
   </style>
   <template>
-    <paper-material elevation="1">
+    <paper-material elevation="1" id="paper">
       <img class="flex" src="{{post.preview_url}}" height="{{computeHeight(post)}}" on-click="handleImageClick"></img>
       <figcaption>
         <h3>{{post.tags}}</h3>
@@ -155,8 +155,8 @@
       this.fire('post-open', {
         post:this.post,
         sharedElements:{
-          'background': e.target,
-          'image': e.target
+          'background': this.$.paper,
+          'image': this.$.paper
         }
       })
     },
