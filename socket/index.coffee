@@ -6,7 +6,6 @@ jwtSecret = process.env.JWT_SECRET
 mongoose = require 'mongoose'
 User = mongoose.model 'User'
 Message = mongoose.model 'Message'
-lock = require("../redis/redisClient").lock
 
 manager = require "./manager"
 apn = require 'apn'
