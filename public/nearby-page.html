@@ -124,13 +124,13 @@
       }
       this.set('loading', true)
       var that = this
-      $.get("https://yande.re/post.json?limit=20&page="+that.page,function(data){
-        console.log(data)
+      // $.get("https://yande.re/post.json?limit=20&page="+that.page,function(data){
+      //   console.log(data)
 
-        that.set('page', that.page+1)
-        that.set('posts', that.posts.concat(data))
-        that.set('loading', false)
-      })
+      //   that.set('page', that.page+1)
+      //   that.set('posts', that.posts.concat(data))
+      //   that.set('loading', false)
+      // })
     },
     handleNewPost:function(e){
       if(!this.msnry) return

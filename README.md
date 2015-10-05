@@ -1,28 +1,41 @@
 
 
-# install
 
 # prerequisites
 
-* Redis
 * MongoDB
 * GraphicsMagic
 
-```
-npm install -g grunt-cli
-npm install -g coffeescript
-npm install -g watchify
 
-npm installl
-```
+# install
+
+First install homebrew @ http://brew.sh
 
 ```
-sudo port install graphicsmagic
+brew install mongodb
+brew install graphicsmagick
 ```
+
+#####to start mongodb for the first time
+```
+mkdir /data
+mkdir /data/db
+sudo mongod
+```
+
+```
+sudo npm install -g grunt-cli
+sudo npm install -g coffeescript
+sudo npm install -g watchify
+
+npm install
+```
+
 
 ```
 // Enviornment Viables:
-JWT_SECRET
-NODE_ENV
+// put this in ~/.zshrc file
+export JWT_SECRET="1qazxsw2"
+export NODE_ENV="development"
 ```
 
