@@ -1,11 +1,15 @@
 
 mongoose = require('mongoose')
+crate = require('mongoose-crate')
+S3 = require('mongoose-crate-s3')
+GraphicsMagic = require('mongoose-crate-gm')
 
 Schema = mongoose.Schema
 
 MessageSchema = new Schema
   fromUser: {type : Schema.ObjectId, ref : 'User'},
   toUser: {type : Schema.ObjectId, ref : 'User'},
+  toBoard: {type : Schema.ObjectId, ref : 'Board'},
   date: { type: Date }
   type: { type: String, default: 'text' }
   content: { type: String, default: '' }
@@ -31,5 +35,20 @@ MessageSchema.options.toObject.transform = (doc, ret, options) ->
   delete ret._id
   delete ret.__v
   return ret
+
+MessageSchema.plugin crate,
+  storage:
+    new S3
+      key: 'AKIAJPH7WDSTFTOXAK7Q'
+      secret: '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'
+      bucket: 'instantchat'
+  fields:
+    image:
+      processor: new GraphicsMagic
+        transforms:
+          small:
+            resize: '300x300'
+            format: '.jpg'
+          original:{}
 
 mongoose.model 'Message', MessageSchema

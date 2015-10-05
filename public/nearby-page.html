@@ -6,6 +6,8 @@
 <link rel="import" href="bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="bower_components/neon-animation/neon-animation.html">
 
+<link rel="import" href="bower_components/paper-input/paper-input.html">
+<link rel="import" href="bower_components/paper-button/paper-button.html">
 
 <link rel="import" href="post-paper.html">
 
@@ -21,12 +23,18 @@
       -webkit-perspective-origin: 50% 50%; /* Chrome, Safari, Opera */
       perspective-origin: 50% 50%;
     }
+    paper-material{
+      background: white;
+      padding: 0 20px 20px;
+      width:260px;
+    }
   </style>
   <template>
     <div id="root">
       <div id="grid" class="grid">
         <paper-material elevation="1" class="layout vertical grid-item">
-          Test
+          <paper-input label="Post something" id="username" value="{{postContent}}"></paper-input>
+          <paper-button class="flex" on-click="handlePost">Post</paper-button>
         </paper-material>
         <template id="repeat" is="dom-repeat" items="{{posts}}" on-dom-change="handleNewPost">
           <post-paper post="{{item}}"></post-paper>
