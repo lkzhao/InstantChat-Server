@@ -35,7 +35,7 @@
         <paper-input label="Password" id="password" value="{{password}}" errorMessage="{{passwordError}}"></paper-input>
         <paper-button class="flex" on-click="handleLogin">Login</paper-button>
       </paper-material>
-      <a href="/#/signup" id="btn" class="layout vertical center">Sign Up</a>
+      <a href="/#!/signup" id="btn" class="layout vertical center">Sign Up</a>
     </main>
   </template>
 </dom-module>
@@ -57,11 +57,12 @@
         this.set("passwordError","Username cannot be blank")
       if (!this.password || !this.username)
         return
+      var that = this
       auth.authenticate(this.username, this.password, function(success, error){
         if (success){
           MoreRouting.navigateTo('/')
         }else{
-          this.set('globalError', error)
+          that.set('globalError', error)
         }
       })
     },

@@ -12,6 +12,7 @@
     "mongoose": "^4.0.2",
     "mongoose-crate": "^1.0.10",
     "mongoose-crate-gm": "^1.0.0",
+    "mongoose-crate-localfs": "^1.1.1",
     "mongoose-crate-s3": "^1.1.1",
     "multer": "^0.1.8",
     "react": "^0.13.3",

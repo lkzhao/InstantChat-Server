@@ -4,6 +4,7 @@ crypto = require('crypto')
 crate = require('mongoose-crate')
 S3 = require('mongoose-crate-s3')
 GraphicsMagic = require('mongoose-crate-gm')
+path = require('path')
 
 Schema = mongoose.Schema
 

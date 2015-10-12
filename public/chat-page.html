@@ -11,6 +11,7 @@
     <more-route name="chat" path="/chat/:username" params="{{params}}" active="{{chatActive}}"></more-route>
     <more-route name="nearby" path="/"></more-route>
     <neon-animated-pages id="contents" selected="[[page]]" attr-for-selected="name">
+      <!-- Every page is a full size page -->
       <chat-content name="chat" username="{{getUsername(chatActive,params.username)}}" on-profile-open="handleProfileOpen" on-post-open="handlePostOpen" id="chat"></chat-content>
       <profile-dialog name="profile" id="profile" profile="{{profile}}" on-close="handleDialogClose"></profile-dialog>
       <post-dialog name="post" id="post" post="{{post}}" on-close="handleDialogClose"></post-dialog>
@@ -55,9 +56,9 @@
     },
 
     ready: function() {
-      // if (!auth.loggedIn()){
-      //   MoreRouting.navigateTo('/login')
-      // }
+      if (!auth.loggedIn()){
+        MoreRouting.navigateTo('/login')
+      }
     }
 
   });
